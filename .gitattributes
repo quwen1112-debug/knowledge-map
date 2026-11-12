@@ -1,0 +1,16 @@
+# 统一换行符：源码一律 LF，避免跨平台踩坑
+* text=auto eol=lf
+
+# 脚本必须 LF —— CRLF 会让 macOS/Linux 报 "bad interpreter"
+*.sh    text eol=lf
+*.js    text eol=lf
+*.html  text eol=lf
+*.md    text eol=lf
+
+# Windows 启动器保留 CRLF，双击才能正常工作
+*.bat   text eol=crlf
+
+# 图片按二进制处理，不做任何转换
+*.png   binary
+*.jpg   binary
+*.webp  binary

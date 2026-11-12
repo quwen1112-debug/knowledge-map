@@ -1,0 +1,2785 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>知识拓扑 · 问一个概念，长出一片</title>
+<style>
+  :root{
+    --bg:#0c0d0f;
+    --panel:#121417;
+    --panel-2:#171a1e;
+    --panel-3:#1d2126;
+    --line:rgba(235,232,225,.085);
+    --line-2:rgba(235,232,225,.14);
+    --ink:#e8e5de;
+    --ink-2:#d5d1c8;
+    --dim:#a3a099;
+    --dim-2:#807d76;
+    --accent:#d98748;
+    --accent-soft:rgba(217,135,72,.13);
+    --teal:#4f9d8d;
+    --rose:#c96f6f;
+    --blue:#7f9ac4;
+    --olive:#a8985f;
+    --r:14px;
+    --ease:cubic-bezier(.16,1,.3,1);
+    --fs:1.1;              /* 界面字号总开关，右上角 A− / A+ 调，存本地 */
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,"Segoe UI Variable Display","Segoe UI","Noto Sans SC","PingFang SC",system-ui,sans-serif;
+    overflow:hidden;
+  }
+  button{font-family:inherit;color:inherit;cursor:pointer}
+  ::selection{background:rgba(217,135,72,.3)}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#2a2e34;border-radius:8px}
+  ::-webkit-scrollbar-track{background:transparent}
+
+  .app{display:grid;grid-template-rows:58px 1fr;height:100dvh}
+
+  /* ---------- top bar ---------- */
+  .top{
+    display:flex;align-items:center;gap:18px;padding:0 18px;
+    border-bottom:1px solid var(--line);background:rgba(12,13,15,.86);
+    backdrop-filter:blur(20px);position:relative;z-index:40;
+  }
+  .brand{display:flex;align-items:center;gap:11px;min-width:0}
+  .mark{
+    width:26px;height:26px;border-radius:8px;position:relative;flex:none;
+    background:linear-gradient(150deg,#2a2118,#151719);
+    border:1px solid rgba(217,135,72,.36);
+  }
+  .mark::after{
+    content:"";position:absolute;inset:7px;border-radius:50%;
+    border:1.5px solid var(--accent);opacity:.85;
+    box-shadow:0 0 12px rgba(217,135,72,.5);
+  }
+  .brand h1{font-size:calc(14px * var(--fs));font-weight:650;margin:0;letter-spacing:.02em}
+  .brand p{font-size:calc(11.5px * var(--fs));margin:1px 0 0;color:var(--dim);letter-spacing:.02em}
+  .stats{display:flex;gap:16px;margin-left:auto;font-size:calc(12px * var(--fs));color:var(--dim);white-space:nowrap}
+  .stats b{color:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .tools{display:flex;gap:6px;align-items:center}
+  .btn{
+    border:1px solid var(--line-2);background:transparent;color:var(--ink-2);
+    padding:6px 11px;border-radius:9px;font-size:calc(12.5px * var(--fs));transition:.18s var(--ease);
+    white-space:nowrap;
+  }
+  .btn:hover{border-color:rgba(235,232,225,.26);color:var(--ink);background:rgba(255,255,255,.03)}
+  .btn:active{transform:scale(.97)}
+  .btn.danger:hover{border-color:rgba(201,111,111,.45);color:#e0a2a2}
+  .btn.wide{width:100%;padding:9px}
+  .btn.primary{
+    background:var(--accent);border-color:var(--accent);color:#15100b;font-weight:620;
+  }
+  .btn.primary:hover{background:#e3924f;border-color:#e3924f;color:#15100b}
+  .icon-btn{
+    display:none;width:32px;height:32px;border-radius:9px;border:1px solid var(--line-2);
+    background:transparent;align-items:center;justify-content:center;flex:none;
+  }
+
+  /* ---------- layout ---------- */
+  .main{display:grid;grid-template-columns:296px 1fr;min-height:0;position:relative}
+  .rail{
+    border-right:1px solid var(--line);background:var(--panel);
+    display:flex;flex-direction:column;min-height:0;z-index:30;
+  }
+  .ask{padding:18px 16px 14px;border-bottom:1px solid var(--line)}
+  .ask label{display:block;font-size:calc(11.5px * var(--fs));font-weight:600;color:var(--dim);letter-spacing:.06em;margin-bottom:8px}
+  .ask-row{display:flex;gap:6px}
+  .ask-row input{
+    flex:1;min-width:0;background:var(--panel-3);border:1px solid var(--line-2);
+    border-radius:11px;padding:11px 12px;color:var(--ink);font-size:calc(13.5px * var(--fs));outline:none;
+    transition:.18s var(--ease);
+  }
+  .ask-row input::placeholder{color:var(--dim-2)}
+  .ask-row input:focus{border-color:rgba(217,135,72,.55);background:#20242a;box-shadow:0 0 0 3px var(--accent-soft)}
+  .send{
+    width:40px;flex:none;border-radius:11px;border:1px solid var(--line-2);
+    background:var(--panel-3);display:grid;place-items:center;transition:.18s var(--ease);
+  }
+  .send:hover{background:var(--accent);border-color:var(--accent)}
+  .send:hover svg{stroke:#15100b}
+  .send:active{transform:scale(.95)}
+  .send svg{stroke:var(--ink-2);transition:.18s}
+
+  .examples{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .ex{
+    font-size:calc(11.5px * var(--fs));padding:4px 8px;border-radius:7px;border:1px solid var(--line);
+    color:var(--dim);background:transparent;transition:.15s var(--ease);
+  }
+  .ex:hover{color:var(--ink);border-color:var(--line-2);background:rgba(255,255,255,.03)}
+
+  .queue{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  .q-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:14px 16px 8px;font-size:calc(11.5px * var(--fs));font-weight:600;color:var(--dim);letter-spacing:.06em;
+  }
+  .q-head span:last-child{font-variant-numeric:tabular-nums}
+  .q-list{overflow-y:auto;padding:0 8px 8px;flex:1}
+  .q-item{
+    display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:8px;
+    font-size:calc(12.5px * var(--fs));color:var(--ink-2);cursor:pointer;transition:.14s var(--ease);
+    border:1px solid transparent;
+  }
+  .q-item:hover{background:rgba(255,255,255,.04);border-color:var(--line)}
+  .q-item .dot{width:6px;height:6px;border-radius:50%;flex:none;background:var(--dim-2)}
+  .q-item.pending .dot{background:var(--rose)}
+  .q-item .tag{margin-left:auto;font-size:calc(10px * var(--fs));color:var(--dim-2)}
+  .q-empty{padding:14px 10px;font-size:calc(12px * var(--fs));color:var(--dim);line-height:1.75}
+  .rail-foot{padding:12px 16px 16px;border-top:1px solid var(--line)}
+  .rail-foot .btn.wide + .btn.wide{margin-top:8px}
+  #btnFillAll{color:#e9bb92;border-color:rgba(217,135,72,.4);background:rgba(217,135,72,.09);font-weight:620}
+  #btnFillAll:hover{background:rgba(217,135,72,.15);border-color:rgba(217,135,72,.55)}
+  #btnFillAll.busy{color:#d99b9b;border-color:rgba(201,111,111,.4);background:rgba(201,111,111,.08)}
+  .fill-bar{
+    height:3px;border-radius:2px;background:rgba(235,232,225,.07);
+    margin:0 0 0;overflow:hidden;display:none;
+  }
+  .fill-bar.on{display:block;margin:8px 0 0}
+  .fill-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#e9bb92);
+    border-radius:2px;transition:width .3s var(--ease)}
+
+  /* ---------- stage ---------- */
+  .stage{position:relative;overflow:hidden;background:
+    radial-gradient(circle at 50% 38%,#14171b 0%,#0c0d0f 68%)}
+  .stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+  .stage canvas.grabbing{cursor:grabbing}
+  .empty{
+    position:absolute;inset:0;display:grid;place-content:center;text-align:center;
+    pointer-events:none;gap:6px;transition:opacity .4s;
+  }
+  .empty h3{margin:0;font-size:calc(15px * var(--fs));font-weight:560;color:var(--ink-2)}
+  .empty p{margin:0;font-size:calc(12px * var(--fs));color:var(--dim-2);line-height:1.8}
+
+  .legend{
+    position:absolute;left:18px;bottom:16px;display:flex;gap:12px;flex-wrap:wrap;
+    font-size:calc(11.5px * var(--fs));color:var(--dim);pointer-events:none;
+  }
+  .legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:0}
+  .zoom{
+    position:absolute;right:16px;bottom:16px;display:flex;flex-direction:column;
+    border:1px solid var(--line-2);border-radius:10px;overflow:hidden;background:rgba(18,20,23,.9);
+    backdrop-filter:blur(10px);transition:right .42s var(--ease);
+  }
+  body.panel-open .zoom{right:420px}
+  @media (max-width:900px){ body.panel-open .zoom{right:16px} }
+  .zoom button{
+    width:34px;height:32px;border:none;background:transparent;color:var(--dim);
+    font-size:calc(15px * var(--fs));line-height:1;transition:.15s;display:grid;place-items:center;
+  }
+  .zoom button+button{border-top:1px solid var(--line)}
+  .zoom button:hover{background:rgba(255,255,255,.06);color:var(--ink)}
+
+  /* ---------- detail panel ---------- */
+  .panel{
+    position:absolute;top:0;right:0;bottom:0;width:calc(404px + (var(--fs) - 1) * 130px);max-width:100%;
+    background:var(--panel);border-left:1px solid var(--line);
+    transform:translateX(101%);transition:transform .42s var(--ease);
+    display:flex;flex-direction:column;z-index:35;box-shadow:-30px 0 60px rgba(0,0,0,.45);
+  }
+  .panel.open{transform:none}
+  body.noanim .panel{transition:none !important}
+  .p-scroll{overflow-y:auto;flex:1;padding:20px 22px 18px}
+  .p-top{display:flex;align-items:center;gap:8px;margin-bottom:14px}
+  .p-cat{
+    display:inline-flex;align-items:center;gap:6px;font-size:calc(11.5px * var(--fs));font-weight:600;letter-spacing:.04em;
+    color:var(--ink-2);border:1px solid var(--line);padding:3px 8px;border-radius:6px;
+  }
+  .p-cat i{width:6px;height:6px;border-radius:50%}
+  .p-close{
+    margin-left:auto;width:28px;height:28px;border-radius:8px;border:1px solid transparent;
+    background:transparent;display:grid;place-items:center;color:var(--dim);
+  }
+  .p-close:hover{background:rgba(255,255,255,.05);color:var(--ink)}
+  .panel h2{font-size:calc(25px * var(--fs));line-height:1.2;margin:0 0 3px;letter-spacing:-.02em;font-weight:640}
+  .p-alias{font-size:calc(12px * var(--fs));color:var(--dim);margin-bottom:13px}
+  .p-dup{
+    display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+    margin:0 0 12px;padding:9px 11px;border-radius:9px;
+    background:rgba(201,111,111,.09);border:1px solid rgba(201,111,111,.3);
+    font-size:calc(11.5px * var(--fs));color:#d9a6a4;line-height:1.65;
+  }
+  .p-dup b{color:#f0c9c9;font-weight:620}
+  .p-dup .dup-btn{
+    margin-left:auto;border:1px solid rgba(201,111,111,.45);background:rgba(201,111,111,.12);
+    color:#efb9b7;font-size:calc(11.5px * var(--fs));font-weight:600;padding:4px 9px;border-radius:7px;
+  }
+  .p-dup .dup-btn:hover{background:rgba(201,111,111,.2)}
+  .p-brief{font-size:calc(14.5px * var(--fs));line-height:1.85;color:var(--ink);margin:0 0 4px}
+
+  /* ---- 换个角度讲 ---- */
+  .p-angles{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 0}
+  .p-angle{
+    border:1px solid var(--line-2);background:var(--panel-2);color:var(--ink-2);
+    font-size:calc(12px * var(--fs));font-weight:600;padding:6px 10px;border-radius:999px;
+    display:inline-flex;align-items:center;gap:6px;transition:background .16s var(--ease),border-color .16s,color .16s;
+  }
+  .p-angle:hover{border-color:rgba(217,135,72,.45);color:var(--ink);background:var(--panel-3)}
+  .p-angle.on{background:var(--accent-soft);border-color:rgba(217,135,72,.5);color:#e9bb92}
+  .p-angle .dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:.85;flex:none}
+  .p-x{
+    border:1px solid var(--line-2);border-left:2px solid rgba(217,135,72,.5);border-radius:10px;
+    background:linear-gradient(180deg,rgba(217,135,72,.055),rgba(217,135,72,.012));
+    padding:12px 13px;margin:11px 0 2px;animation:xin .34s var(--ease);
+  }
+  @keyframes xin{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  .p-x-h{display:flex;align-items:center;font-size:calc(11.5px * var(--fs));font-weight:650;letter-spacing:.05em;color:#e9bb92;margin-bottom:9px}
+  .p-x-x{margin-left:auto;background:none;border:0;font-size:calc(11px * var(--fs));color:var(--dim);padding:2px 3px}
+  .p-x-x:hover{color:var(--ink-2)}
+  .p-x-para{font-size:calc(13.5px * var(--fs));line-height:1.95;color:var(--ink-2);margin:0 0 9px}
+  .p-x-para:last-of-type{margin-bottom:0}
+  .p-x-take{
+    font-size:calc(13px * var(--fs));line-height:1.75;color:var(--ink);background:rgba(235,232,225,.05);
+    border-radius:7px;padding:8px 10px;margin:11px 0 10px;display:flex;gap:8px;
+  }
+  .p-x-take i{font-style:normal;font-size:calc(10.5px * var(--fs));font-weight:700;color:var(--accent);flex:none;letter-spacing:1px;padding-top:2px}
+  .p-x-l{font-size:calc(11px * var(--fs));color:var(--dim-2);margin:10px 0 7px}
+  .x-sk i{
+    display:block;height:9px;border-radius:5px;margin-bottom:8px;
+    background:linear-gradient(90deg,rgba(235,232,225,.055),rgba(235,232,225,.14),rgba(235,232,225,.055));
+    background-size:200% 100%;animation:sk 1.15s linear infinite;
+  }
+  .x-sk i:nth-child(2){width:88%}
+  .x-sk i:nth-child(3){width:62%}
+  @keyframes sk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+  .p-sec{margin-top:15px;padding-top:13px;border-top:1px solid var(--line)}
+  .p-label{
+    display:flex;align-items:center;gap:7px;font-size:calc(11.5px * var(--fs));font-weight:650;letter-spacing:.06em;
+    color:var(--dim);margin-bottom:9px;text-transform:uppercase;
+  }
+  .p-label .hint{letter-spacing:0;text-transform:none;font-weight:400;color:var(--dim);font-size:calc(11px * var(--fs));opacity:.9}
+  .p-points{margin:0;padding:0;list-style:none}
+  .p-points li{
+    position:relative;padding-left:15px;font-size:calc(13.5px * var(--fs));line-height:1.85;
+    color:var(--ink-2);margin-bottom:9px;
+  }
+  .p-points li::before{
+    content:"";position:absolute;left:0;top:11px;width:6px;height:1.5px;background:var(--dim);
+  }
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{
+    display:inline-flex;align-items:center;gap:5px;font-size:calc(12.5px * var(--fs));padding:6px 10px;
+    border-radius:8px;border:1px solid var(--line-2);background:var(--panel-2);
+    color:var(--ink-2);transition:.16s var(--ease);
+  }
+  .chip:hover{border-color:rgba(217,135,72,.5);color:var(--ink);background:#1f2429}
+  .chip:active{transform:scale(.97)}
+  .chip .rel{font-size:calc(10.5px * var(--fs));color:var(--dim);margin-left:2px;font-weight:400}
+  .chip.on{border-color:rgba(217,135,72,.55);color:var(--accent);background:var(--accent-soft)}
+  .chip.ghost{
+    border-style:dashed;color:var(--dim);background:transparent;
+  }
+  .chip.ghost:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+  .chip .plus{color:var(--accent);font-weight:700;margin-right:1px;font-size:calc(11px * var(--fs))}
+  .p-notes{
+    width:100%;min-height:76px;resize:vertical;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:10px;padding:10px 11px;color:var(--ink-2);
+    font-size:calc(13.5px * var(--fs));line-height:1.75;font-family:inherit;outline:none;transition:.16s;
+  }
+  .p-notes:focus{border-color:rgba(217,135,72,.45);background:#1b1f24}
+  .p-notes::placeholder{color:var(--dim-2)}
+  .p-actions{display:flex;gap:7px;margin-top:16px;flex-wrap:wrap}
+  .p-foot{
+    padding:12px 22px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;
+    font-size:calc(11.5px * var(--fs));color:var(--dim);
+  }
+  .p-dock{
+    flex:none;padding:11px 16px 12px;border-top:1px solid var(--line);background:var(--panel);
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  }
+  .p-dock-btns{display:flex;gap:6px;flex-wrap:wrap;min-width:0}
+  .p-dock-meta{margin-left:auto;font-size:calc(11px * var(--fs));color:var(--dim-2);white-space:nowrap;letter-spacing:.02em}
+  .status-btn{
+    display:inline-flex;align-items:center;gap:6px;font-size:calc(12.5px * var(--fs));padding:7px 11px;
+    border-radius:8px;border:1px solid var(--line-2);background:transparent;color:var(--ink-2);
+    transition:.16s var(--ease);
+  }
+  .status-btn:hover{color:var(--ink);border-color:var(--line-2);background:rgba(255,255,255,.03)}
+  .status-btn.active{color:var(--teal);border-color:rgba(79,157,141,.45);background:rgba(79,157,141,.1)}
+  .status-btn.rose.active{color:#d99b9b;border-color:rgba(201,111,111,.45);background:rgba(201,111,111,.1)}
+  .edit-field{
+    width:100%;background:var(--panel-2);border:1px solid var(--line-2);border-radius:9px;
+    padding:9px 10px;color:var(--ink-2);font-size:calc(12.5px * var(--fs));line-height:1.75;font-family:inherit;
+    outline:none;resize:vertical;
+  }
+  .edit-field:focus{border-color:rgba(217,135,72,.45)}
+  .field{margin-bottom:10px}
+  .field label{display:block;font-size:calc(11px * var(--fs));font-weight:600;color:var(--dim);letter-spacing:.05em;margin-bottom:6px}
+
+  /* ---------- toast / modal ---------- */
+  .toast{
+    position:fixed;left:50%;bottom:26px;transform:translate(-50%,26px);
+    background:rgba(28,32,37,.96);border:1px solid var(--line-2);color:var(--ink);
+    padding:10px 15px;border-radius:11px;font-size:calc(13.5px * var(--fs));opacity:0;pointer-events:none;
+    transition:.32s var(--ease);z-index:90;backdrop-filter:blur(14px);max-width:min(86vw,460px);
+    box-shadow:0 18px 40px rgba(0,0,0,.5);
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .toast b{color:var(--accent);font-weight:600}
+
+  .modal{
+    position:fixed;inset:0;background:rgba(6,7,8,.66);backdrop-filter:blur(6px);
+    display:none;place-items:center;z-index:100;padding:20px;
+  }
+  .modal.open{display:grid}
+  .modal-box{
+    width:min(520px,100%);max-height:84dvh;overflow-y:auto;background:var(--panel);
+    border:1px solid var(--line-2);border-radius:16px;padding:24px;
+    box-shadow:0 40px 90px rgba(0,0,0,.6);
+  }
+  .modal-box h3{margin:0 0 4px;font-size:calc(16px * var(--fs));font-weight:620}
+  .modal-box .sub{font-size:calc(12.5px * var(--fs));color:var(--dim);line-height:1.75;margin:0 0 18px}
+  .modal-box .field input{
+    width:100%;background:var(--panel-2);border:1px solid var(--line-2);border-radius:9px;
+    padding:9px 10px;color:var(--ink);font-size:calc(13.5px * var(--fs));outline:none;font-family:inherit;
+  }
+  .modal-box .field input:focus{border-color:rgba(217,135,72,.45)}
+  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+  .note{
+    font-size:calc(12px * var(--fs));color:var(--dim);line-height:1.8;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-bottom:16px;
+  }
+  .note b{color:var(--ink-2);font-weight:560}
+  .note code,.gw-b code{font-family:ui-monospace,Consolas,monospace;font-size:calc(11.5px * var(--fs));
+    background:rgba(235,232,225,.07);padding:1.5px 5px;border-radius:4px;color:var(--ink-2)}
+
+  /* ---------- 本机网关状态条 ---------- */
+  .gw{
+    border:1px solid var(--line-2);border-radius:11px;padding:11px 12px;margin:0 0 16px;
+    background:var(--panel-2);transition:border-color .2s;
+  }
+  .gw-h{display:flex;align-items:center;gap:7px;font-size:calc(12.5px * var(--fs));color:var(--ink-2)}
+  .gw-h b{font-weight:620;letter-spacing:.2px}
+  .gw-t{margin-left:auto;font-size:calc(11.5px * var(--fs));color:var(--dim)}
+  .gw-dot{width:7px;height:7px;border-radius:50%;background:var(--dim-2);flex:none}
+  .gw-b{font-size:calc(11.5px * var(--fs));color:var(--dim);line-height:1.75;margin-top:6px}
+  .gw-b b{color:var(--ink-2);font-weight:560}
+  .gw.on{border-color:rgba(79,157,141,.45);cursor:pointer}
+  .gw.on .gw-dot{background:var(--teal);box-shadow:0 0 0 3px rgba(79,157,141,.16)}
+  .gw.on .gw-t{color:#7fc0b1}
+
+  /* ---------- 模型接没接：状态胶囊 + 顶部提示条 ---------- */
+  .ai-pill{
+    display:inline-flex;align-items:center;gap:6px;font-size:calc(11.5px * var(--fs));font-weight:600;
+    padding:6px 10px;border-radius:999px;border:1px solid var(--line-2);
+    background:var(--panel-2);color:var(--dim);cursor:pointer;white-space:nowrap;
+    transition:color .18s,border-color .18s,background .18s;
+  }
+  .ai-pill i{width:6px;height:6px;border-radius:50%;background:var(--dim-2);flex:none}
+  .ai-pill:hover{color:var(--ink-2);border-color:var(--line-2)}
+  .ai-pill.on{color:#7fc0b1;border-color:rgba(79,157,141,.45);background:rgba(79,157,141,.08)}
+  .ai-pill.on i{background:var(--teal);box-shadow:0 0 0 3px rgba(79,157,141,.15)}
+  .ai-pill.warn{color:#d99b9b;border-color:rgba(201,111,111,.4);background:rgba(201,111,111,.07)}
+  .ai-pill.warn i{background:var(--rose)}
+
+  .ai-banner{
+    position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    display:none;align-items:center;gap:11px;max-width:calc(100% - 40px);
+    background:rgba(201,111,111,.10);border:1px solid rgba(201,111,111,.34);
+    border-radius:999px;padding:7px 14px;font-size:calc(12px * var(--fs));color:#e2bab8;
+    backdrop-filter:blur(10px);z-index:6;line-height:1.5;
+  }
+  .ai-banner.on{display:flex}
+  .ai-banner b{color:#f2cdcb;font-weight:600}
+  .ai-banner a{color:#e9bb92;text-decoration:none;border-bottom:1px dashed rgba(233,187,146,.55);cursor:pointer;white-space:nowrap}
+  .ai-banner a:hover{color:#f4cba6}
+  .ai-banner .bn-note{color:var(--dim);font-size:calc(11.5px * var(--fs))}
+  .ai-banner.ok{background:rgba(79,157,141,.10);border-color:rgba(79,157,141,.38);color:#93cabe}
+  .ai-banner.ok b{color:#b6ded5}
+  @media (max-width:900px){ .ai-banner{font-size:calc(11.5px * var(--fs));gap:8px;padding:6px 11px} .ai-banner .bn-note{display:none} }
+
+  /* ---------- responsive ---------- */
+  @media (max-width:900px){
+    .app{grid-template-rows:54px 1fr}
+    .icon-btn{display:flex}
+    .main{grid-template-columns:1fr}
+    .rail{
+      position:absolute;inset:0 auto 0 0;width:min(86vw,320px);
+      transform:translateX(-101%);transition:transform .38s var(--ease);
+      box-shadow:30px 0 60px rgba(0,0,0,.5);
+    }
+    .rail.open{transform:none}
+    .panel{width:100%;border-left:none}
+    .stats{display:none}
+    .tools .btn{padding:6px 8px;font-size:calc(11px * var(--fs))}
+    .brand p{display:none}
+  }
+  /* ---------- 界面字号 A− / A+ ---------- */
+  .fs-wrap{position:relative;display:flex;flex:none}
+  .fsctl{display:flex;border:1px solid var(--line-2);border-radius:9px;overflow:hidden}
+  .fsctl button{
+    width:calc(27px * var(--fs));height:calc(27px * var(--fs));border:0;background:var(--panel-2);
+    color:var(--dim);font-size:calc(11.5px * var(--fs));font-weight:700;line-height:1;
+    display:grid;place-items:center;transition:background .16s,color .16s;
+  }
+  .fsctl button:first-child{border-right:1px solid var(--line)}
+  .fsctl button:hover{background:var(--panel-3);color:var(--ink)}
+  .fs-tip{
+    position:absolute;top:calc(100% + 8px);right:0;z-index:60;pointer-events:none;
+    background:var(--panel-3);border:1px solid var(--line-2);border-radius:7px;
+    padding:3px 8px;font-size:calc(11px * var(--fs));color:var(--ink-2);
+    opacity:0;transform:translateY(-4px);transition:opacity .18s,transform .18s;
+  }
+  .fs-tip.show{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    *{transition-duration:.01ms !important;animation-duration:.01ms !important}
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <button class="icon-btn" id="railToggle" aria-label="侧栏">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 4h12M2 8h12M2 12h12"/></svg>
+    </button>
+    <div class="brand">
+      <div class="mark"></div>
+      <div>
+        <h1>知识拓扑</h1>
+        <p>问一个概念 · 它长出一片</p>
+      </div>
+    </div>
+    <div class="stats" id="stats"></div>
+    <div class="tools">
+      <div class="fs-wrap">
+        <div class="fsctl" title="界面字号（Ctrl + − / =）">
+          <button id="fsMinus" aria-label="缩小字号">A−</button>
+          <button id="fsPlus" aria-label="放大字号">A+</button>
+        </div>
+        <div class="fs-tip" id="fsTip">110%</div>
+      </div>
+      <button class="ai-pill" id="aiPill" title="模型接入状态">
+        <i></i><span id="aiPillTxt">模型未接</span>
+      </button>
+      <button class="btn" id="btnSettings">接入模型</button>
+      <button class="btn" id="btnExport">导出</button>
+      <button class="btn" id="btnImport">导入</button>
+      <button class="btn danger" id="btnReset">重置</button>
+    </div>
+  </header>
+
+  <div class="main">
+    <aside class="rail" id="rail">
+      <div class="ask">
+        <label for="askInput">你想搞清什么</label>
+        <div class="ask-row">
+          <input id="askInput" placeholder="TCP 端口 与 UDP 端口 的区别" autocomplete="off" spellcheck="false" aria-label="输入概念">
+          <button class="send" id="askBtn" aria-label="提交">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8h9M8.5 4l4 4-4 4"/></svg>
+          </button>
+        </div>
+        <div class="examples" id="examples"></div>
+      </div>
+
+      <div class="queue">
+        <div class="q-head"><span>待理清</span><span id="queueCount">0</span></div>
+        <div class="q-list" id="queueList"></div>
+      </div>
+
+      <div class="rail-foot">
+        <button class="btn wide" id="btnFillAll" style="display:none">
+          <span id="fillTxt">一键补全</span>
+        </button>
+        <div class="fill-bar" id="fillBar"><i id="fillProg"></i></div>
+        <button class="btn wide" id="btnExtract">粘贴一段文字 · 抽概念</button>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage">
+      <canvas id="graph"></canvas>
+      <div class="ai-banner" id="aiBanner">
+        <span id="bnMain">模型还没接上，现在只有本地词库</span>
+        <a id="bnGo">去网关打开</a>
+        <span class="bn-note" id="bnNote">没在跑？双击目录里的「启动知识拓扑.bat」</span>
+      </div>
+      <div class="empty" id="emptyHint">
+        <h3>画布是空的</h3>
+        <p>左边输入一个概念，回车。<br>它会回答你，并把关键词挂上去。</p>
+      </div>
+      <div class="legend" id="legend"></div>
+      <div class="zoom">
+        <button data-z="in" aria-label="放大">+</button>
+        <button data-z="out" aria-label="缩小">−</button>
+        <button data-z="fit" aria-label="居中" style="font-size:calc(12px * var(--fs))">⌖</button>
+      </div>
+    </main>
+
+    <section class="panel" id="panel" aria-live="polite"></section>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="modal" id="modal"><div class="modal-box" id="modalBox"></div></div>
+
+<script>
+/* ============================================================
+   知识拓扑 · 单文件工具
+   1) 概念库   2) 图引擎   3) 交互   4) 持久化   5) 可选模型接入
+   ============================================================ */
+
+/* ---------------- 1. 概念库 ---------------- */
+// 每条：id, 名称, 类别, 一句话, 关键点[], 关联[目标,'关系'], 延伸关键词[], 别名[]
+const SEED_RAW = [
+["tcp","TCP","核心","面向连接、可靠、按序的字节流协议：用握手、确认、重传换来确定性。",
+ ["先握手建立连接，再传数据，最后挥手断开——连接状态记在两端的内核里。","可靠性靠三件套：序列号、确认应答、超时重传。","它是字节流，不保留消息边界：一次 send 可能被拆成多段，也可能和下一次合并。","首部最小 20 字节，比 UDP 多出的 12 字节就是确定性的成本。"],
+ [["udp","对比"],["port","使用"],["handshake","机制"],["socket","使用"],["reliable","属性"],["ordered","属性"],["header-overhead","代价"]],
+ ["三次握手","滑动窗口","拥塞控制","TIME_WAIT","半连接队列","Nagle 算法"],
+ ["传输控制协议","Transmission Control Protocol"]],
+
+["udp","UDP","核心","无连接的数据报协议：发出去就不管，快、轻、不保证送达。",
+ ["首部固定 8 字节，只有源端口、目的端口、长度、校验和。","不握手、不重传、不排序——可靠性要由应用层自己补（序号、重传、FEC）。","保留消息边界：一次发送对应一个完整数据报。","丢了就丢了，迟到的不收——这正是实时业务想要的语义。"],
+ [["tcp","对比"],["connectionless","属性"],["port","使用"],["udp-app","应用"],["quic","承载"],["header-overhead","代价"]],
+ ["数据报","丢包","乱序","NAT 穿透","WebRTC","QUIC"],
+ ["用户数据报协议","User Datagram Protocol"]],
+
+["port","端口","核心","一个 16 位编号（0–65535），用来决定这条数据该交给主机上的哪个进程。",
+ ["IP 定位主机，端口定位进程，合起来才是完整的收件地址。","IANA 划分：0–1023 知名端口，1024–49151 注册端口，49152–65535 临时端口。","TCP 与 UDP 的端口空间相互独立：53 号可以同时被两边使用，互不冲突。","端口是逻辑编号，不是硬件接口，也没有「第几个口」的物理含义。"],
+ [["tcp-port","细分"],["udp-port","细分"],["socket","组成"],["five-tuple","组成"],["well-known","划分"],["ephemeral","划分"],["nat","穿越"]],
+ ["16 位","知名端口","临时端口","端口占用","EADDRINUSE"],
+ ["端口号","Port"]],
+
+["tcp-port","TCP 端口","核心","TCP 报文头里的 16 位源/目的端口，配合 IP 与序列号锁定一条可靠连接。",
+ ["服务端用监听端口（如 443）接受连接，客户端由内核分配临时端口。","同一个监听端口可以承载成千上万条连接，靠五元组区分彼此。","被占用时报 EADDRINUSE；两个方向的端口各自表示「谁来、给谁」。"],
+ [["port","属于"],["tcp","属于"],["socket","组成"],["five-tuple","组成"],["listen","机制"],["ephemeral","使用"]],
+ ["监听端口","EADDRINUSE","端口冲突","五元组"],["TCP port","TCP端口号"]],
+
+["udp-port","UDP 端口","核心","UDP 首部里的 16 位端口：没有连接状态，只有「这个包从哪个口来、到哪个口去」。",
+ ["无连接，所以不存在连接标识，端口只做进程分发。","同一个 UDP 端口可以被多个进程复用（SO_REUSEPORT），也可以被不同源地址的包同时命中。","DNS、DHCP、QUIC 都依赖 UDP 端口完成第一次寻址。"],
+ [["port","属于"],["udp","属于"],["nat","穿越"],["port-reuse","机制"]],
+ ["端口复用","UDP port","5353","53"],["UDP端口号"]],
+
+["socket","套接字","机制","内核暴露给应用的通信端点（一个 fd），绑定 IP:端口 之后才真正可收发。",
+ ["socket() 只是创建，bind() 绑定地址，listen() 进入监听，accept() 取出已完成握手的连接。","客户端 connect() 触发内核分配临时端口并发起握手。","它是应用与 TCP/IP 协议栈之间唯一的那道门。"],
+ [["port","使用"],["tcp","使用"],["five-tuple","组成"],["accept-queue","机制"],["epoll","机制"]],
+ ["fd","bind","listen","accept","connect"],
+ ["Socket","套接口"]],
+
+["five-tuple","五元组","机制","源 IP、源端口、目的 IP、目的端口、协议号——五个值唯一确定一条连接。",
+ ["内核靠五元组在连接表里找到对应的 socket。","任何一项变化就是另一条连接，所以 NAT 改端口等于换了一条连接。","防火墙、负载均衡的四层规则也是按五元组匹配的。"],
+ [["port","组成"],["socket","组成"],["nat","影响"],["firewall","使用"]],
+ ["四元组","连接标识","conntrack"]],
+
+["handshake","三次握手","机制","SYN → SYN+ACK → ACK。三次是确认「双方都能收、也都能发」的最小次数。",
+ ["第一次 SYN 携带客户端初始序列号，同时消耗一个半连接槽位。","第二次 SYN+ACK 确认客户端可达，并带上服务端自己的初始序列号。","第三次 ACK 让服务端确认客户端收到了自己的序列号——此时连接才算建立。","两次不够：无法确认客户端的接收能力；四次是浪费。"],
+ [["tcp","机制"],["half-open","相关"],["seq-ack","组成"],["syn-flood","弱点"]],
+ ["SYN","SYN+ACK","三次握手过程","握手"]],
+
+["teardown","四次挥手","机制","FIN → ACK → FIN → ACK。TCP 是全双工，两个方向必须各自关闭。",
+ ["主动关闭方发 FIN 表示「我没数据要发了」，但仍可继续收。","被动方先回 ACK，等自己数据发完再发 FIN。","主动关闭方最后进入 TIME_WAIT。"],
+ [["tcp","机制"],["time-wait","衍生"],["rst","替代"]],
+ ["FIN","半关闭","挥手"]],
+
+["time-wait","TIME_WAIT","机制","主动关闭方在连接结束后停留 2×MSL 的状态，通常 60 秒。",
+ ["作用一：最后那个 ACK 若丢失，对端重发 FIN 时还能再回一次 ACK。","作用二：让这条连接的残留报文在网络里自然消亡，避免污染下一条同五元组的连接。","大量 TIME_WAIT 通常说明是短连接太多，而不是「系统有病」。"],
+ [["teardown","衍生"],["so-reuseaddr","解法"],["port-reuse","相关"]],
+ ["2MSL","TIME_WAIT 过多","短连接"]],
+
+["half-open","半连接队列","机制","收到 SYN 但三次握手尚未完成的连接，先挂在 SYN 队列里等。",
+ ["队列长度受内核参数与 listen backlog 影响，满了就丢新 SYN。","大量伪造源的 SYN 会把它撑爆——这就是 SYN Flood。","netstat 里看到的 SYN_RECV 就是这批连接。"],
+ [["handshake","相关"],["backlog","约束"],["syn-flood","被攻击"],["accept-queue","对比"]],
+ ["SYN 队列","SYN_RECV","syncookies"]],
+
+["accept-queue","全连接队列","机制","已完成三次握手、等应用 accept() 取走的连接队列。",
+ ["应用 accept 太慢，队列就溢出，表现为「客户端连上了但没响应」。","溢出时 Linux 默认丢 ACK，客户端会重试，看起来像随机超时。","长度主要由 listen() 的 backlog 参数决定。"],
+ [["backlog","约束"],["half-open","对比"],["socket","机制"]],
+ ["accept 队列","全连接","somaxconn"]],
+
+["backlog","backlog","机制","listen(fd, backlog) 的参数，约束「等待被 accept 的连接」能排多长。",
+ ["历史上指半连接队列上限，Linux 上主要约束全连接队列。","上限还受 net.core.somaxconn 压着，改代码不改内核参数没用。","它不是并发上限，只是「排队区」大小。"],
+ [["accept-queue","约束"],["half-open","约束"],["socket","机制"]],
+ ["somaxconn","listen 参数"]],
+
+["seq-ack","序列号与 ACK","机制","每个字节都有一个序号；接收方用 ACK 号告诉对方「下一个我要第几号字节」。",
+ ["序号是字节级的，不是包级的——所以 TCP 天生是字节流。","累计确认：ACK=1001 表示 1–1000 全部收到。","重复 ACK 三次会触发快重传，不必等超时。"],
+ [["tcp","组成"],["reliable","实现"],["sliding-window","配合"],["ordered","实现"]],
+ ["SEQ","ACK 号","累计确认","快重传"]],
+
+["sliding-window","滑动窗口","机制","接收方通告的窗口 rwnd，限制「还没被确认的数据最多能有多少在途」。",
+ ["窗口大小写在 TCP 头的 window 字段里，是流量控制的核心。","窗口为 0 时发送方停发，并定期发窗口探测包。","窗口缩放选项让 16 位字段可以表示更大的值。"],
+ [["flow-control","实现"],["seq-ack","配合"],["tcp","机制"],["mss","相关"]],
+ ["rwnd","窗口缩放","零窗口"]],
+
+["congestion","拥塞控制","机制","用 cwnd 和一套算法（慢启动、拥塞避免、快重传、快恢复）避免把网络压垮。",
+ ["它关心的是「网络能不能承受」，和接收方窗口（流量控制）是两件事。","实际发送窗口 = min(rwnd, cwnd)。","丢包会被当作拥塞信号，这就是无线网络下 TCP 变慢的原因。"],
+ [["flow-control","对比"],["sliding-window","配合"],["tcp","机制"],["quic","改进"]],
+ ["cwnd","慢启动","拥塞窗口","BBR","CUBIC"]],
+
+["flow-control","流量控制","机制","端到端机制：防止发送方发得太快，把接收方的缓冲区淹没。",
+ ["靠接收方通告窗口实现，接收方说停就停。","和拥塞控制方向相反：一个保护接收方，一个保护网络。","窗口为 0 时，发送方靠持续探测来等待恢复。"],
+ [["sliding-window","实现"],["congestion","对比"],["tcp","机制"]],
+ ["rwnd","零窗口","接收窗口"]],
+
+["mss","MTU 与 MSS","机制","MTU 是链路层能承载的最大 IP 包（以太网 1500）；MSS = MTU − IP 头 − TCP 头，通常 1460。",
+ ["MSS 在握手时协商，目的是「不让 IP 层去分片」。","路径上任何一跳 MTU 变小，都可能让大包被丢弃。","隧道（VPN、VXLAN）会额外吃掉几十字节，所以经常要下调 MSS。"],
+ [["mtu-frag","对比"],["tcp","机制"],["handshake","协商"],["udp","影响"]],
+ ["1500","1460","MSS 协商","巨帧"]],
+
+["mtu-frag","IP 分片","机制","IP 包超过链路 MTU 就会被切成多片，丢任何一片整包报废。",
+ ["TCP 靠 MSS 协商基本避免；UDP 大包很容易踩到。","分片后重组只在目的端做，中间设备看不到完整报文。","很多防火墙直接丢弃分片包，表现就是「小包通、大包不通」。"],
+ [["mss","对比"],["udp","影响"],["tcpdump","排障"]],
+ ["分片","DF 位","PMTUD"]],
+
+["nagle","Nagle 算法","机制","攒够一定量或等到 ACK 才把小包发出去，减少网络里的碎包。",
+ ["它和「延迟 ACK」撞在一起，会造成几十到几百毫秒的额外延迟。","这就是很多 RPC 框架要开 TCP_NODELAY 的原因。","对吞吐友好，对延迟不友好。"],
+ [["tcp","机制"],["delayed-ack","冲突"],["header-overhead","缓解"]],
+ ["TCP_NODELAY","延迟 ACK","小包"]],
+
+["delayed-ack","延迟 ACK","机制","收到数据后不立刻回 ACK，等一小会儿（通常 40ms 级）看能不能捎带确认。",
+ ["目的是减少纯 ACK 包，节省带宽。","和 Nagle 同时开启时，双方都在等对方——延迟就这么产生了。","现代内核会用快速确认和动态阈值缓解。"],
+ [["nagle","冲突"],["seq-ack","相关"],["tcp","机制"]],
+ ["40ms","捎带确认","延迟确认"]],
+
+["keepalive","TCP Keepalive","机制","空闲一段时间后发探测包，确认对端还活着。",
+ ["默认空闲 2 小时才探测，对业务几乎无意义。","中间设备（NAT、防火墙）通常几分钟就清理会话表，比 Keepalive 快得多。","所以业务层心跳才是常规解法。"],
+ [["tcp","机制"],["nat","影响"],["socket","使用"]],
+ ["心跳","SO_KEEPALIVE","连接保活"]],
+
+["rst","RST 重置","机制","直接掀桌：端口没监听、连接已失效、或明确拒绝时回 RST，对端立刻报错。",
+ ["「Connection reset by peer」基本都是对端发了 RST。","比等超时友好——错误暴露得快，但原因往往藏得深。","防火墙拒绝（reject）和丢弃（drop）表现完全不同：拒绝回 RST，丢弃只会超时。"],
+ [["tcp","机制"],["firewall","行为"],["teardown","替代"]],
+ ["Connection reset","连接重置","reject"]],
+
+["syn-flood","SYN Flood","机制","用大量伪造源地址的 SYN 撑满半连接队列，让正常连接进不来。",
+ ["攻击成本极低，效果却是服务整体不可用。","常见缓解：SYN Cookie、加大队列、缩短超时、前置清洗。"],
+ [["half-open","攻击目标"],["handshake","利用"],["firewall","缓解"]],
+ ["SYN Cookie","DDoS","半连接攻击"]],
+
+["so-reuseaddr","SO_REUSEADDR","机制","允许绑定处于 TIME_WAIT 的地址，解决服务重启时的 EADDRINUSE。",
+ ["它解决的是「地址还在 TIME_WAIT」而不是「端口正在被用」。","Windows 上语义不同，还带有端口占用行为的差异。","和 SO_REUSEPORT 不是一回事：后者是多个进程共享同一端口。"],
+ [["time-wait","解法"],["port-reuse","相关"],["socket","使用"]],
+ ["EADDRINUSE","地址复用","重启报错"]],
+
+["port-reuse","端口复用","机制","同一端口被多个连接或多个进程共用，分两种语义。",
+ ["SO_REUSEADDR：绕过 TIME_WAIT 的绑定限制，服务重启不报错。","SO_REUSEPORT：多个进程各自 listen 同一端口，由内核分摊新连接。","Linux 上允许 bind 已连接的端口，是为了让服务平滑重启。"],
+ [["so-reuseaddr","相关"],["udp-port","应用"],["socket","使用"]],
+ ["REUSEPORT","多进程监听","平滑重启"]],
+
+["connection","面向连接","机制","双方内核各自维护状态机，连接是「共同认定的状态」，不是一条物理线。",
+ ["状态包括 LISTEN / SYN_SENT / ESTABLISHED / FIN_WAIT / TIME_WAIT 等。","状态存在内核里，所以进程崩了连接也就没了。","中间设备要维护会话表，超时清理会让「看起来还连着」的连接突然失效。"],
+ [["tcp","属性"],["connectionless","对比"],["teardown","状态"]],
+ ["连接状态","状态机","ESTABLISHED","LISTEN"]],
+
+["connectionless","无连接","属性","没有状态机、没有握手，每个包自带完整地址，彼此独立。",
+ ["无状态意味着任何一台设备宕机都不影响后续包的寻址——这是它的优势。","也意味着没有「连接断了」这种事件，你只能靠超时判断。"],
+ [["udp","属性"],["connection","对比"],["quic","混合"]],
+ ["无状态","stateless"]],
+
+["reliable","可靠传输","属性","不丢、不重、不乱——用确认、重传、去重、排序换来的。",
+ ["代价是延迟、内存（重传缓冲）和头部开销。","「可靠」是端到端语义，中间任何一跳都不保证。","应用层也能自己实现可靠，QUIC 就是干这个的。"],
+ [["tcp","属性"],["seq-ack","实现"],["ordered","配套"]],
+ ["确认重传","去重排序","端到端"]],
+
+["ordered","有序交付","属性","字节流按序号交付；前面缺一段，后面的先缓存等着。",
+ ["有序是有代价的：一个包丢了，后面全被堵住——这就是队头阻塞。","QUIC 把有序改到了「每条流内有序」，跨流互不阻塞。"],
+ [["tcp","属性"],["seq-ack","实现"],["quic","改进"]],
+ ["队头阻塞","HOL"]],
+
+["header-overhead","首部开销","代价","TCP 每包 20 字节起步，UDP 只花 8 字节。",
+ ["20 字节换来序列号、确认、窗口、控制位——也就是可靠性。","小包高频场景（游戏、语音）里，这 12 字节的差距非常可观。","IPv6 头也更大，算总开销时别漏掉。"],
+ [["tcp","代价"],["udp","优势"],["mss","相关"]],
+ ["20 字节","8 字节","协议开销"]],
+
+["well-known","知名端口","划分","0–1023，由 IANA 分配给标准服务，绑定通常需要特权。",
+ ["22 SSH、53 DNS、80 HTTP、443 HTTPS、3306 MySQL、6379 Redis。","改端口不是安全措施，只是减少扫描噪音。"],
+ [["port","划分"],["ephemeral","对比"],["firewall","使用"]],
+ ["0-1023","特权端口","标准端口"]],
+
+["ephemeral","临时端口","划分","49152–65535，客户端发起连接时由内核随机分配，用完释放。",
+ ["范围可调（net.ipv4.ip_local_port_range）。","短连接打满临时端口会报「Cannot assign requested address」——这通常说明连接没被复用。"],
+ [["port","划分"],["well-known","对比"],["so-reuseaddr","相关"]],
+ ["动态端口","ip_local_port_range","端口耗尽"]],
+
+["listen","监听","机制","服务端把 socket 绑定地址后调用 listen()，进入 LISTEN 状态等待 SYN。",
+ ["LISTEN 状态的 socket 不参与数据传输，只负责接新连接。","accept() 返回的是一个全新的 fd，和监听 fd 不是同一个。"],
+ [["socket","机制"],["accept-queue","相关"],["tcp-port","使用"]],
+ ["LISTEN","accept","监听套接字"]],
+
+["epoll","epoll / IO 多路复用","机制","一个线程同时盯上万个 fd，谁就绪就处理谁。",
+ ["select/poll 每次都要遍历全部 fd，epoll 靠内核事件表只返回就绪的。","LT 水平触发（没处理完会一直通知）vs ET 边缘触发（只通知一次，必须一次读完）。","ET 模式必须配非阻塞 fd，否则会卡死。"],
+ [["socket","使用"],["tcp","应用"],["lb","相关"]],
+ ["select","poll","LT","ET","Reactor"],
+ ["IO 多路复用","IO multiplexing"]],
+
+["dns","DNS","机制","域名到 IP 的目录服务，主要走 UDP 53；响应过大或区域传送时改走 TCP 53。",
+ ["这也是「同一端口在 TCP 和 UDP 各自存在」最典型的教学例子。","解析链路上有本地缓存、递归解析器、权威服务器三层。","TTL 决定缓存多久，改解析不生效多半是 TTL 还没到。"],
+ [["udp-port","使用"],["tcp-port","使用"],["port","例子"],["udp","应用"]],
+ ["53","递归解析","TTL","A 记录"],
+ ["域名系统","Domain Name System"]],
+
+["http","HTTP","机制","请求-响应式的文本协议，跑在 TCP 上，默认 80。",
+ ["无状态，靠 Cookie / Header 携带上下文。","1.1 引入长连接和管道化，2 引入多路复用（但仍在 TCP 上，仍有队头阻塞）。","报文是「起始行 + 头 + 空行 + 体」。"],
+ [["tcp","承载"],["https","升级"],["http3","演进"],["well-known","端口"]],
+ ["80","请求头","状态码","长连接"],
+ ["超文本传输协议"]],
+
+["https","HTTPS","机制","HTTP over TLS，默认 443：加密 + 身份校验 + 完整性。",
+ ["握手阶段验证书、协商密钥，之后用对称加密传数据。","证书链任何一环不被信任，浏览器就直接拦。"],
+ [["tls","组成"],["http","升级"],["well-known","端口"],["quic","演进"]],
+ ["443","证书","加密"]],
+
+["tls","TLS","机制","在传输层之上协商密钥并加密数据的协议；1.3 把握手压到 1-RTT，还支持 0-RTT 恢复。",
+ ["握手：ClientHello → ServerHello + 证书 → 密钥交换 → Finished。","1.3 干掉了 RSA 密钥交换和一堆老算法，默认前向安全。","SNI 让一个 IP 上挂多个证书，这也是 HTTPS 能被按域名分流的基础。"],
+ [["https","组成"],["tcp","承载"],["quic","内置"],["reverse-proxy","卸载"]],
+ ["握手","证书","SNI","1.3","前向安全"],
+ ["SSL","传输层安全"]],
+
+["quic","QUIC","机制","基于 UDP 自己实现可靠传输 + 加密 + 多路复用，绕开 TCP 的队头阻塞。",
+ ["可靠性、流量控制、拥塞控制在用户态重写，迭代不用等内核。","内置 TLS 1.3，握手和加密合并，首次 1-RTT、恢复 0-RTT。","用 Connection ID 而非四元组标识连接，所以换网（WiFi→4G）连接不断。"],
+ [["udp","承载"],["http3","应用"],["ordered","改进"],["tls","内置"]],
+ ["0-RTT","连接迁移","队头阻塞","UDP 443"],
+ ["快速 UDP 互联网连接"]],
+
+["http3","HTTP/3","机制","HTTP over QUIC，默认 UDP 443。",
+ ["把「流」交给 QUIC 管理，一个流丢包不再阻塞其他流。","对丢包率高的移动网络收益最明显。"],
+ [["quic","组成"],["http","演进"],["udp-port","使用"]],
+ ["UDP 443","h3","多路复用"]],
+
+["nat","NAT","机制","改写 IP 头做地址转换，让私网地址共用有限的公网地址。",
+ ["常见形态：SNAT（出方向换源地址）、DNAT（入方向换目的地址）。","会话表是 NAT 的命门：表项超时，连接就「凭空断了」。","这也是内网服务默认不能被外部主动访问的原因。"],
+ [["pat","相关"],["five-tuple","改写"],["keepalive","影响"],["port","穿越"]],
+ ["SNAT","DNAT","会话表","私网"],
+ ["网络地址转换"]],
+
+["pat","PAT / 端口映射","机制","NAT 的同时连端口一起改写，用一个公网 IP 承载成千上万条会话。",
+ ["也叫 NAPT，家用路由器基本都是这种。","端口映射（DNAT）是反向操作：把公网的某端口固定转给内网某主机。","打洞（STUN）就是利用双方各自的 NAT 表项让 UDP 直连。"],
+ [["nat","细分"],["udp","穿透"],["port","改写"]],
+ ["NAPT","端口映射","打洞","STUN"]],
+
+["lb","负载均衡","机制","把请求分摊到多个后端实例，顺便做健康检查和故障摘除。",
+ ["四层看 IP/端口做转发，快但看不到内容；七层看 HTTP 头/路径，能做灰度。","常见算法：轮询、最少连接、一致性哈希。","会话保持（sticky）本质是把同一客户端钉到同一后端。"],
+ [["reverse-proxy","相关"],["five-tuple","四层"],["http","七层"],["epoll","实现"]],
+ ["四层","七层","LVS","一致性哈希"],
+ ["负载均衡器","Load Balancer"]],
+
+["reverse-proxy","反向代理","机制","对外暴露一个入口，内部按域名/路径转发到不同后端，顺带做 TLS 卸载和限流。",
+ ["客户端只知道代理的地址，不知道真实后端——这是「反向」的含义。","TLS 卸载后，内网可以是明文 HTTP。","X-Forwarded-For 用来把真实客户端 IP 传下去。"],
+ [["lb","相关"],["tls","卸载"],["http","处理"]],
+ ["Nginx","TLS 卸载","X-Forwarded-For"],
+ ["反向代理服务器"]],
+
+["firewall","防火墙","机制","按五元组（有时还看应用层）决定放行还是阻断。",
+ ["「端口没开」和「服务没起」的报错长得很像：前者回 RST 或直接丢，后者也是 RST。","drop 会超时，reject 会秒失败——排障时先分清是哪种。","有状态防火墙会维护会话表，所以回应包不需要单独放行。"],
+ [["five-tuple","依据"],["rst","行为"],["port","对象"],["port-scan","对抗"]],
+ ["iptables","安全组","drop","reject"],
+ ["包过滤","安全组"]],
+
+["port-scan","端口扫描","机制","逐个端口试探，判断开了哪些服务。",
+ ["全连接扫描会留下完整日志；SYN 半开扫描不打完握手，更隐蔽。","扫描和攻击只差意图，所以扫描行为本身就是告警信号。"],
+ [["port","对象"],["firewall","对抗"],["half-open","利用"]],
+ ["nmap","SYN 扫描","端口探测"]],
+
+["ss-netstat","ss / netstat","排障","看端口占用与连接状态的第一现场。",
+ ["ss -lntp 看监听，ss -tnp 看已建立，ss -s 看汇总（比 netstat 快得多）。","Windows 用 netstat -ano 再配合 tasklist 找进程。","大量 TIME_WAIT、CLOSE_WAIT 堆积，分别指向短连接过多和应用没关连接。"],
+ [["port","查看"],["time-wait","诊断"],["tcp","诊断"]],
+ ["ss -lntp","CLOSE_WAIT","端口占用"],
+ ["netstat","ss"]],
+
+["tcpdump","tcpdump","排障","抓包看「到底发没发、收没收到」，比读日志可靠得多。",
+ ["常用：tcpdump -i any -nn port 443 -w out.pcap，再用 Wireshark 看。","能看到重传、乱序、零窗口、RST——这些是日志里永远没有的信息。","抓包本身会消耗 CPU，生产环境注意过滤条件。"],
+ [["tcp","诊断"],["mtu-frag","诊断"],["rst","诊断"]],
+ ["Wireshark","pcap","抓包"],
+ ["抓包"]],
+
+["udp-app","为什么实时业务选 UDP","应用","游戏、音视频、DNS 选 UDP，因为「新的比旧的有用」，丢一帧不值得等重传。",
+ ["重传造成的延迟抖动，比丢一帧更伤体验。","应用层用序号 + 抖动缓冲 + FEC 自己补可靠性，比 TCP 更贴合场景。","语音、直播、云游戏、WebRTC 全部走这条路。"],
+ [["udp","应用"],["webrtc","应用"],["quic","演进"],["reliable","权衡"]],
+ ["实时","低延迟","抖动","FEC"]],
+
+["webrtc","WebRTC","应用","浏览器实时音视频：靠 ICE/STUN/TURN 打洞，媒体走 UDP（SRTP）。",
+ ["信令不在协议里，得自己搭。","打洞失败就回落到 TURN 中继，成本和延迟都会上升。","媒体加密是强制的，不是可选项。"],
+ [["udp","承载"],["pat","穿透"],["udp-app","应用"]],
+ ["ICE","STUN","TURN","SRTP","打洞"]],
+
+["congestion-window","拥塞窗口","机制","cwnd：发送方自己维护的「在途数据上限」，由拥塞控制算法动态调整。",
+ ["实际可发量 = min(cwnd, rwnd)。","慢启动阶段每收到一个 ACK 就翻倍，指数增长到阈值。","丢包时 cwnd 腰斩，这是「丢包即拥塞」假设的代价。"],
+ [["congestion","组成"],["sliding-window","配合"],["tcp","机制"]],
+ ["cwnd","慢启动","ssthresh"]]
+];
+
+const CAT_COLOR = {
+  "核心":"#d98748", "机制":"#4f9d8d", "属性":"#7f9ac4",
+  "代价":"#a8985f", "划分":"#8d84b8", "应用":"#5f9a6a",
+  "排障":"#c96f6f", "待补充":"#6b6a66"
+};
+const CATS = Object.keys(CAT_COLOR);
+
+const DICT = {};      // id -> concept
+const NAME_IDX = {};  // normalized name/alias -> id
+
+function norm(s){
+  return String(s||"").toLowerCase()
+    .replace(/[\s\u3000]+/g,"")
+    .replace(/[（）()「」“”"'`·・,，。.、:：;；!！?？\-_/\\]/g,"");
+}
+
+/* 中英混写拆开：「线程（thread）」→ {zh:"线程", en:"thread"}
+   拓扑里显示中文名，英文原名进 alias，这样无论搜哪个都能命中同一个点。 */
+function splitBilingual(s){
+  const raw = String(s||"").trim();
+  const m = raw.match(/^(.+?)\s*[（(]\s*([^（()）]{1,40}?)\s*[)）]\s*$/);
+  if(m && m[1].trim() && m[2].trim()) return { zh:m[1].trim(), en:m[2].trim(), raw };
+  return { zh:raw, en:"", raw };
+}
+/* 芯片上的写法：中文在前，英文小字跟在后面 */
+function chipLabel(w){
+  const p = splitBilingual(w);
+  return p.en ? esc(p.zh) + '<span class="rel">' + esc(p.en) + '</span>' : esc(p.zh);
+}
+function buildDict(){
+  SEED_RAW.forEach(r=>{
+    const [id,name,cat,brief,points,links,kw,alias] = r;
+    DICT[id] = {id,name,cat,brief,points,links,kw,alias:alias||[]};
+    NAME_IDX[norm(name)] = id;
+    (alias||[]).forEach(a=>{ NAME_IDX[norm(a)] = id; });
+    NAME_IDX[norm(id)] = id;
+  });
+}
+buildDict();
+
+/* ---------------- 2. 状态与持久化 ---------------- */
+const LS_KEY = "knowledge.v1";
+const LS_CFG = "knowledge.cfg.v1";
+const START_IDS = ["port","tcp","udp","tcp-port","udp-port"];
+
+let S = {
+  nodes: [],   // {id,name,cat,brief,points[],kw[],alias[],status,manual,x,y,vx,vy,appear}
+  links: [],   // {s,t,rel}
+  sel: null,
+  hover: null,
+  scale: 1, tx: 0, ty: 0,
+  alpha: 0
+};
+
+function freshGraph(){
+  S.nodes = []; S.links = []; S.sel = null;
+  const seedNodes = START_IDS.map(id=>makeNode(DICT[id]));
+  seedNodes.forEach(n=>S.nodes.push(n));
+  const idSet = new Set(START_IDS);
+  START_IDS.forEach(id=>{
+    const c = DICT[id];
+    (c.links||[]).forEach(([t,rel])=>{
+      if(idSet.has(t)) addLinkRaw(id,t,rel);
+    });
+  });
+  layoutSeed();
+}
+
+function makeNode(c, extra){
+  return {
+    id: c.id, name: c.name, cat: c.cat || "待补充",
+    brief: c.brief || "",
+    points: (c.points||[]).slice(),
+    kw: (c.kw||[]).slice(),
+    alias: (c.alias||[]).slice(),
+    status: (extra&&extra.status) || "new",
+    manual: !!(extra&&extra.manual),
+    x: (Math.random()-.5)*420, y: (Math.random()-.5)*420, vx:0, vy:0, appear:0
+  };
+}
+function layoutSeed(){
+  S.nodes.forEach((n,i)=>{
+    const a = (i/S.nodes.length)*Math.PI*2;
+    n.x = Math.cos(a)*170 + (Math.random()-.5)*60;
+    n.y = Math.sin(a)*170 + (Math.random()-.5)*60;
+  });
+}
+function addLinkRaw(s,t,rel){
+  if(s===t) return false;
+  if(S.links.some(l=>(l.s===s&&l.t===t)||(l.s===t&&l.t===s))) return false;
+  S.links.push({s,t,rel:rel||"相关", bornAt:nowMs()});
+  return true;
+}
+function nodeById(id){ return S.nodes.find(n=>n.id===id); }
+
+// 按名字/别名找一个已经在图上的节点（含手建节点）
+function findNodeByName(q){
+  const n = norm(q);
+  if(!n) return null;
+  for(const N of S.nodes){
+    if(norm(N.name) === n) return N;
+    if((N.alias||[]).some(a=>norm(a) === n)) return N;
+  }
+  return null;
+}
+function neighbors(id){
+  const out = [];
+  S.links.forEach(l=>{
+    if(l.s===id && nodeById(l.t)) out.push({id:l.t, rel:l.rel});
+    else if(l.t===id && nodeById(l.s)) out.push({id:l.s, rel:l.rel});
+  });
+  return out;
+}
+function degree(id){ return neighbors(id).length; }
+
+function save(){
+  try{
+    const data = {
+      v:1,
+      nodes:S.nodes.map(n=>({
+        id:n.id,name:n.name,cat:n.cat,brief:n.brief,points:n.points,
+        kw:n.kw,alias:n.alias,status:n.status,manual:n.manual,angles:n.angles
+      })),
+      links:S.links
+    };
+    localStorage.setItem(LS_KEY, JSON.stringify(data));
+  }catch(e){ /* 隐私模式等场景静默失败 */ }
+}
+function load(){
+  let raw = null;
+  try{ raw = localStorage.getItem(LS_KEY); }catch(e){}
+  if(!raw){ freshGraph(); return; }
+  try{
+    const d = JSON.parse(raw);
+    if(!d || !Array.isArray(d.nodes) || !d.nodes.length) throw 0;
+    S.nodes = d.nodes.map(n=>Object.assign({vx:0,vy:0,appear:1}, n));
+    S.links = (d.links||[]).filter(l=>l&&l.s&&l.t);
+    layoutSeed();
+  }catch(e){ freshGraph(); }
+}
+
+/* ---------------- 3. 图引擎 ---------------- */
+const cvs = document.getElementById("graph");
+const ctx = cvs.getContext("2d");
+const nowMs = () => (window.performance && performance.now) ? performance.now() : Date.now();
+let DPR = Math.min(window.devicePixelRatio||1, 2);
+
+/* 界面字号总开关：CSS 侧走 --fs，画布文字也跟着放大，两边不会脱节 */
+const LS_UI = "knowledge.ui.v1";
+let UI_K = 1.1;
+function loadFs(){
+  try{
+    const j = JSON.parse(localStorage.getItem(LS_UI)||"{}");
+    if(typeof j.fs === "number") UI_K = Math.min(1.5, Math.max(0.9, j.fs));
+  }catch(e){}
+  document.documentElement.style.setProperty("--fs", UI_K);
+}
+function setFs(k){
+  UI_K = Math.min(1.5, Math.max(0.9, Math.round(k*100)/100));
+  document.documentElement.style.setProperty("--fs", UI_K);
+  try{ localStorage.setItem(LS_UI, JSON.stringify({fs:UI_K})); }catch(e){}
+  resize(); renderAll(); draw();
+  const t = document.getElementById("fsTip");
+  if(t){ t.textContent = Math.round(UI_K*100) + "%"; t.classList.add("show");
+    clearTimeout(setFs._t); setFs._t = setTimeout(()=> t.classList.remove("show"), 1200); }
+}
+let W = 0, H = 0;
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+function resize(){
+  const r = cvs.parentElement.getBoundingClientRect();
+  W = r.width; H = r.height;
+  DPR = Math.min(window.devicePixelRatio||1, 2);
+  cvs.width = Math.round(W*DPR); cvs.height = Math.round(H*DPR);
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+  draw();
+}
+window.addEventListener("resize", resize);
+
+function toWorld(px,py){
+  return { x:(px - S.tx)/S.scale, y:(py - S.ty)/S.scale };
+}
+function toScreen(x,y){
+  return { x:x*S.scale + S.tx, y:y*S.scale + S.ty };
+}
+// 面板打开时占掉的可视宽度，图要往左让
+function panelOffset(){
+  if(!(document.body.classList.contains("panel-open") && window.innerWidth > 900)) return 0;
+  const w = panel ? panel.getBoundingClientRect().width : 0;
+  return Math.round(w || 404);          // 面板宽度会随字号变化，量出来才准
+}
+
+let raf = null, lastT = 0, needFit = false;
+function reheat(a){ S.alpha = Math.max(S.alpha, a||1); startLoop(); }
+
+function startLoop(){
+  if(raf) return;
+  lastT = performance.now();
+  raf = requestAnimationFrame(loop);
+}
+let camT = null;   // 镜头目标：让视图"滑"过去，而不是瞬移
+function flyTo(worldX, worldY, scale){
+  camT = {x: worldX, y: worldY, s: scale || S.scale};
+  S.alpha = Math.max(S.alpha, 0.2);
+  startLoop();
+}
+
+function loop(t){
+  const dt = Math.min(Math.max((t-lastT)/16.67, 0.05), 2.4);
+  lastT = t;
+  step(dt);
+
+  if(camT){
+    const cw = W - panelOffset();
+    const tx = cw/2 - camT.x*camT.s;
+    const ty = H/2 - camT.y*camT.s;
+    S.tx += (tx - S.tx) * 0.16 * dt;
+    S.ty += (ty - S.ty) * 0.16 * dt;
+    S.scale += (camT.s - S.scale) * 0.16 * dt;
+    if(Math.abs(tx-S.tx) < 0.8 && Math.abs(ty-S.ty) < 0.8 && Math.abs(camT.s-S.scale) < 0.004){
+      S.tx = tx; S.ty = ty; S.scale = camT.s; camT = null;
+    } else {
+      S.alpha = Math.max(S.alpha, 0.1);
+    }
+  }
+
+  draw();
+  if(S.alpha > 0.004 || dragging || camT){
+    raf = requestAnimationFrame(loop);
+  } else {
+    S.alpha = 0;
+    raf = null;
+    if(needFit){ needFit = false; fitView(); }
+  }
+}
+
+function step(dt){
+  const n = S.nodes;
+  const a = S.alpha;
+  if(a <= 0) return;
+
+  // 斥力
+  for(let i=0;i<n.length;i++){
+    const A = n[i];
+    for(let j=i+1;j<n.length;j++){
+      const B = n[j];
+      let dx = A.x-B.x, dy = A.y-B.y;
+      let d2 = dx*dx+dy*dy;
+      if(d2 < 1){ dx = (Math.random()-.5); dy = (Math.random()-.5); d2 = 1; }
+      const d = Math.sqrt(d2);
+      const minD = 92;
+      if(d < minD*2.4){
+        const f = (18000/Math.max(d2, 900)) * a * dt;
+        const ux = dx/d, uy = dy/d;
+        A.vx += ux*f; A.vy += uy*f;
+        B.vx -= ux*f; B.vy -= uy*f;
+      }
+    }
+  }
+  // 弹簧
+  S.links.forEach(l=>{
+    const A = nodeById(l.s), B = nodeById(l.t);
+    if(!A||!B) return;
+    const dx = B.x-A.x, dy = B.y-A.y;
+    const d = Math.max(Math.hypot(dx,dy), 1);
+    const rest = 185;
+    const f = (d - rest) * 0.019 * a * dt;
+    const ux = dx/d, uy = dy/d;
+    A.vx += ux*f; A.vy += uy*f;
+    B.vx -= ux*f; B.vy -= uy*f;
+  });
+  // 向心 + 阻尼
+  n.forEach(N=>{
+    N.vx += -N.x * 0.007 * a * dt;
+    N.vy += -N.y * 0.007 * a * dt;
+    // 新节点涟漪 / 新连线渐显
+
+    if(N === dragNode) return;
+    N.vx *= 0.86; N.vy *= 0.86;
+    N.x += N.vx * dt; N.y += N.vy * dt;
+    if(N.appear < 1){
+      N.appear = Math.min(1, N.appear + 0.06*dt);
+    }
+  });
+  S.alpha *= Math.pow(0.985, dt);
+}
+
+let dragNode = null, dragging = false;
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  // 点阵背景
+  const gap = 34 * Math.max(S.scale, .6);
+  const ox = S.tx % gap, oy = S.ty % gap;
+  ctx.fillStyle = "rgba(235,232,225,.055)";
+  for(let x=ox; x<W; x+=gap){
+    for(let y=oy; y<H; y+=gap){
+      ctx.fillRect(x, y, 1, 1);
+    }
+  }
+
+  const sel = S.sel ? nodeById(S.sel) : null;
+  const hov = S.hover ? nodeById(S.hover) : null;
+  const focus = hov || sel;
+  const hl = new Set();
+  if(focus){
+    hl.add(focus.id);
+    neighbors(focus.id).forEach(x=>hl.add(x.id));
+  }
+
+  // 边
+  S.links.forEach(l=>{
+    const A = nodeById(l.s), B = nodeById(l.t);
+    if(!A||!B) return;
+    const pa = toScreen(A.x,A.y), pb = toScreen(B.x,B.y);
+    const on = focus && (l.s===focus.id || l.t===focus.id);
+    ctx.beginPath();
+    ctx.moveTo(pa.x,pa.y);
+    ctx.lineTo(pb.x,pb.y);
+    const fade = l.bornAt ? Math.min(1, Math.max(0, (nowMs() - l.bornAt) / 420)) : 1;
+    if(fade <= 0.02) return;
+    ctx.strokeStyle = on ? 'rgba(217,135,72,'+(0.55*fade)+')' : 'rgba(235,232,225,'+(0.10*fade)+')';
+    ctx.lineWidth = on ? 1.4 : 1;
+    ctx.stroke();
+
+    if(on){
+      const mx = (pa.x+pb.x)/2, my = (pa.y+pb.y)/2;
+      const ek = UI_K;
+      ctx.font = "600 " + (10.5*ek).toFixed(1) + "px -apple-system,'Segoe UI','Noto Sans SC',sans-serif";
+      const tw = ctx.measureText(l.rel).width;
+      ctx.fillStyle = "rgba(12,13,15,.94)";
+      ctx.fillRect(mx-tw/2-5*ek, my-8*ek, tw+10*ek, 16*ek);
+      ctx.fillStyle = "rgba(217,135,72,.92)";
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText(l.rel, mx, my);
+      ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+    }
+  });
+
+  // 节点
+  S.nodes.forEach(N=>{
+    const p = toScreen(N.x, N.y);
+    const deg = degree(N.id);
+    const base = 8 + Math.min(deg*1.5, 9);
+    const r = base * (0.35 + 0.65*N.appear);
+    const color = CAT_COLOR[N.cat] || CAT_COLOR["待补充"];
+    const isSel = sel && sel.id===N.id;
+    const isHover = hov && hov.id===N.id;
+    const dimmed = focus && !hl.has(N.id);
+
+    ctx.globalAlpha = dimmed ? 0.34 : 1;
+
+    // 新节点涟漪
+    if(N.popAt){
+      const k = (nowMs() - N.popAt) / 620;
+      if(k < 1){
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r + k*40, 0, Math.PI*2);
+        ctx.strokeStyle = 'rgba(217,135,72,'+((1-k)*0.6)+')';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
+    }
+
+    // 选中光晕
+    if(isSel){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,r+9,0,Math.PI*2);
+      ctx.fillStyle = "rgba(217,135,72,.13)";
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,r+5.5,0,Math.PI*2);
+      ctx.strokeStyle = "rgba(217,135,72,.5)";
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    // 主体
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,r,0,Math.PI*2);
+    ctx.fillStyle = "rgba(15,17,20,.96)";
+    ctx.fill();
+    ctx.lineWidth = isSel||isHover ? 2 : 1.5;
+    ctx.strokeStyle = N.manual ? "rgba(201,111,111,.75)" : color;
+    if(N.manual) ctx.setLineDash([3,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // 状态点
+    if(N.status === "mastered"){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,3.2,0,Math.PI*2);
+      ctx.fillStyle = "#4f9d8d";
+      ctx.fill();
+    } else if(N.status === "fuzzy"){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,3.2,0,Math.PI*2);
+      ctx.fillStyle = "#c96f6f";
+      ctx.fill();
+    }
+
+    ctx.globalAlpha = 1;
+  });
+
+  // ---- 标签单独一轮：按重要度排序 + 四向避让，压不下就干脆不画 ----
+  const placed = [];
+  const prio = N =>{
+    let s = degree(N.id);
+    if(sel && N.id===sel.id) s += 2000;
+    if(hov && N.id===hov.id) s += 1500;
+    return s;
+  };
+  const order = S.nodes.slice().sort((a,b)=> prio(b)-prio(a));
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  order.forEach(N=>{
+    const isSel = sel && sel.id===N.id;
+    const isHover = hov && hov.id===N.id;
+    const dimmed = focus && !hl.has(N.id);
+    if(dimmed && !focus) return;
+    if(S.scale <= 0.42 && !isSel && !isHover) return;
+
+    const p = toScreen(N.x, N.y);
+    const rr = 8 + Math.min(degree(N.id)*1.5, 9);
+    const nk = UI_K;
+    ctx.font = (isSel||isHover ? "700 " + (13.5*nk).toFixed(1) + "px" : "600 " + (12.5*nk).toFixed(1) + "px") + " -apple-system,'Segoe UI','Noto Sans SC',sans-serif";
+    const tw = ctx.measureText(N.name).width;
+    const w = tw + 12*nk, h = 19*nk;
+    const raw = [
+      {x:p.x-w/2, y:p.y+rr+5},
+      {x:p.x-w/2, y:p.y-rr-5-h},
+      {x:p.x+rr+7, y:p.y-h/2},
+      {x:p.x-rr-7-w, y:p.y-h/2},
+      {x:p.x+rr*0.7, y:p.y+rr*0.7},
+      {x:p.x-rr*0.7-w, y:p.y+rr*0.7},
+      {x:p.x+rr*0.7, y:p.y-rr*0.7-h},
+      {x:p.x-rr*0.7-w, y:p.y-rr*0.7-h}
+    ];
+    const cvw = W - panelOffset();
+    let box = null, bestScore = Infinity;
+    for(const c0 of raw){
+      // 贴边就推回画布内，别让标签被裁掉
+      const c = {
+        x: Math.min(Math.max(c0.x, 4), Math.max(4, cvw - w - 4)),
+        y: Math.min(Math.max(c0.y, 4), Math.max(4, H - h - 4))
+      };
+      let score = 0;
+      for(const q of placed){
+        const ox = Math.min(c.x+w, q.x+q.w) - Math.max(c.x, q.x);
+        const oy = Math.min(c.y+h, q.y+q.h) - Math.max(c.y, q.y);
+        if(ox > 0 && oy > 0) score += ox*oy;
+      }
+      if(score < bestScore - 0.5){ bestScore = score; box = c; }
+      if(score === 0) break;                 // 完全不压别人，直接用
+    }
+    if(!box) return;
+    placed.push({x:box.x, y:box.y, w, h});
+
+    ctx.globalAlpha = dimmed ? 0.72 : 1;
+    ctx.fillStyle = "rgba(10,11,13,.96)";
+    ctx.fillRect(box.x, box.y, w, h);
+    ctx.fillStyle = isSel ? "#f4dcc6" : (isHover ? "#f0ede6" : "rgba(226,222,214,.94)");
+    ctx.fillText(N.name, box.x+6*nk, box.y+4*nk);
+    ctx.globalAlpha = 1;
+  });
+  ctx.textAlign = "start"; ctx.textBaseline = "alphabetic";
+}
+
+/* ---------------- 4. 交互 ---------------- */
+function hitTest(px,py){
+  let best = null, bestD = Infinity;
+  for(let i=S.nodes.length-1;i>=0;i--){
+    const N = S.nodes[i];
+    const p = toScreen(N.x,N.y);
+    const r = (8 + Math.min(degree(N.id)*1.5,9)) + 6;
+    const d = Math.hypot(px-p.x, py-p.y);
+    if(d < r && d < bestD){ best = N; bestD = d; }
+  }
+  return best;
+}
+
+let panStart = null;
+let dragStart = null;
+
+cvs.addEventListener("pointerdown", e=>{
+  const rect = cvs.getBoundingClientRect();
+  const px = e.clientX-rect.left, py = e.clientY-rect.top;
+  const hit = hitTest(px,py);
+  if(hit){
+    dragNode = hit; dragging = true; dragStart = {x:px, y:py};
+    cvs.setPointerCapture(e.pointerId);
+    cvs.classList.add("grabbing");
+  } else {
+    panStart = {x:px - S.tx, y:py - S.ty};
+    dragStart = {x:px, y:py};
+    cvs.classList.add("grabbing");
+  }
+});
+
+cvs.addEventListener("pointermove", e=>{
+  const rect = cvs.getBoundingClientRect();
+  const px = e.clientX-rect.left, py = e.clientY-rect.top;
+
+  if(dragNode){
+    const w = toWorld(px,py);
+    dragNode.x = w.x; dragNode.y = w.y;
+    dragNode.vx = 0; dragNode.vy = 0;
+    reheat(0.32);
+    return;
+  }
+  if(panStart){
+    S.tx = px - panStart.x; S.ty = py - panStart.y;
+    draw();
+    return;
+  }
+  const hit = hitTest(px,py);
+  const id = hit ? hit.id : null;
+  if(id !== S.hover){
+    S.hover = id;
+    cvs.style.cursor = hit ? "pointer" : "grab";
+    draw();
+  }
+});
+
+function endPointer(e){
+  const rect = cvs.getBoundingClientRect();
+  const px = e.clientX-rect.left, py = e.clientY-rect.top;
+  const moved = dragStart ? Math.hypot(px-dragStart.x, py-dragStart.y) : 99;
+
+  if(dragNode){
+    dragNode = null; dragging = false;
+    cvs.classList.remove("grabbing");
+    reheat(0.4);
+    if(moved < 6){
+      const hit = hitTest(px,py);
+      if(hit) openPanel(hit.id);
+    }
+    return;
+  }
+  if(panStart){ panStart = null; cvs.classList.remove("grabbing"); }
+}
+cvs.addEventListener("pointerup", endPointer);
+cvs.addEventListener("pointercancel", endPointer);
+
+cvs.addEventListener("wheel", e=>{
+  e.preventDefault();
+  const rect = cvs.getBoundingClientRect();
+  const px = e.clientX-rect.left, py = e.clientY-rect.top;
+  const w = toWorld(px,py);
+  const k = Math.exp(-e.deltaY * 0.0014);
+  S.scale = Math.min(3.2, Math.max(0.26, S.scale*k));
+  S.tx = px - w.x*S.scale;
+  S.ty = py - w.y*S.scale;
+  draw();
+}, {passive:false});
+
+document.querySelector(".zoom").addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  const z = b.dataset.z;
+  if(z === "fit"){ fitView(); return; }
+  const cx = W/2, cy = H/2;
+  const w = toWorld(cx,cy);
+  S.scale = Math.min(3.2, Math.max(0.26, S.scale * (z==="in"?1.25:0.8)));
+  S.tx = cx - w.x*S.scale; S.ty = cy - w.y*S.scale;
+  draw();
+});
+
+function anyOffscreen(){
+  const cw = W - panelOffset(), m = 54;
+  return S.nodes.some(n=>{
+    const p = toScreen(n.x, n.y);
+    return p.x < m || p.x > cw-m || p.y < m || p.y > H-m;
+  });
+}
+
+function fitView(animate){
+  if(!S.nodes.length) return;
+  let minX=1e9,minY=1e9,maxX=-1e9,maxY=-1e9;
+  S.nodes.forEach(n=>{
+    minX=Math.min(minX,n.x); maxX=Math.max(maxX,n.x);
+    minY=Math.min(minY,n.y); maxY=Math.max(maxY,n.y);
+  });
+  const bw = Math.max(maxX-minX, 80), bh = Math.max(maxY-minY, 80);
+  const pad = 130;
+  const cw = W - panelOffset();          // 面板占掉的那块不算可视区
+  const sc = Math.min(1.3, Math.max(0.26, Math.min((cw-pad)/bw, (H-pad)/bh)));
+  const cx = (minX+maxX)/2, cy = (minY+maxY)/2;
+  if(animate){ flyTo(cx, cy, sc); return; }
+  S.scale = sc;
+  S.tx = cw/2 - cx*sc;
+  S.ty = H/2 - cy*sc;
+  draw();
+}
+
+/* ---------------- 5. 概念解析与扩展 ---------------- */
+function resolve(q){
+  const n = norm(q);
+  if(!n) return null;
+  if(NAME_IDX[n]) return NAME_IDX[n];
+
+  // 容错：只做"包含"匹配，但必须收紧，否则 "process".includes("ss") 会命中 ss/netstat。
+  // 规则：中文按 2 字起，英文按 4 字母起；两边长度差不能太离谱。
+  const cjk = /[\u4e00-\u9fa5]/.test(n);
+  const minLen = cjk ? 2 : 4;
+  if(!cjk && n.length < 4) return null;
+  let hit = null;
+  for(const k of Object.keys(NAME_IDX)){
+    if(k.length < minLen) continue;
+    if(!(n.includes(k) || k.includes(n))) continue;
+    if(Math.abs(k.length - n.length) > Math.max(2, n.length)) continue;
+    if(!hit || k.length > hit.length) hit = k;
+  }
+  return hit ? NAME_IDX[hit] : null;
+}
+
+function ensureNode(id){
+  let N = nodeById(id);
+  if(N) return N;
+  const c = DICT[id];
+  if(!c) return null;
+  N = makeNode(c);
+  // 落点靠近当前选中节点，视觉上有"长出来"的感觉
+  const anchor = S.sel ? nodeById(S.sel) : S.nodes[0];
+  if(anchor){
+    const a = anchor.x + (Math.random()-.5)*180;
+    const b = anchor.y + (Math.random()-.5)*180;
+    N.x = a; N.y = b;
+  }
+  N.appear = 0;
+  N.popAt = nowMs();
+  S.nodes.push(N);
+  // 只连图上已经存在的节点——不存在的等它自己被加进来时反向补
+  (c.links||[]).forEach(([t,rel])=>{
+    if(DICT[t] && nodeById(t)) addLinkRaw(id, t, rel);
+  });
+  // 反向：已在图上的节点里，如果有词条指向这个新节点，把边补上
+  S.nodes.forEach(other=>{
+    if(other.id === id || !DICT[other.id]) return;
+    (DICT[other.id].links||[]).forEach(([t,rel])=>{
+      if(t === id) addLinkRaw(other.id, id, rel);
+    });
+  });
+  reheat(0.85);
+  save();
+  return N;
+}
+
+function createPending(name){
+  const id = "u_" + norm(name) + "_" + Math.random().toString(36).slice(2,6);
+  const N = {
+    id, name:name.trim(), cat:"待补充", brief:"", points:[], kw:[], alias:[],
+    status:"fuzzy", manual:true, x:0, y:0, vx:0, vy:0, appear:0, popAt:nowMs()
+  };
+  const anchor = S.sel ? nodeById(S.sel) : S.nodes[0];
+  N.x = anchor ? anchor.x + (Math.random()-.5)*160 : 0;
+  N.y = anchor ? anchor.y + (Math.random()-.5)*160 : 90;
+  S.nodes.push(N);
+  if(anchor) addLinkRaw(anchor.id, id, "延伸");
+  reheat(0.9);
+  save();
+  renderFillBtn();          // 新增了空壳，「一键补全」要立刻出现
+  return N;
+}
+
+function addKeyword(ownerId, word){
+  // 芯片可能是「线程（thread）」这种中英混写：中文当名字，英文当别名
+  const p = splitBilingual(word);
+  const zh = p.zh || String(word||"").trim();
+  if(!zh) return null;
+
+  const mine = findNodeByName(zh) || (p.en ? findNodeByName(p.en) : null);
+  if(mine){
+    if(mine.id !== ownerId) addLinkRaw(ownerId, mine.id, "延伸");
+    if(p.en && !(mine.alias||[]).some(a=>norm(a)===norm(p.en))){
+      mine.alias = Array.from(new Set([...(mine.alias||[]), p.en]));
+    }
+    reheat(0.8); save();
+    return mine;
+  }
+  const knownId = resolve(zh) || (p.en ? resolve(p.en) : null);
+  let N;
+  if(knownId){
+    N = ensureNode(knownId);
+    if(N.id !== ownerId) addLinkRaw(ownerId, knownId, "延伸");
+  } else {
+    N = createPending(zh);
+  }
+  if(N && p.en) N.alias = Array.from(new Set([...(N.alias||[]), p.en]));
+  reheat(0.8);
+  save();
+  return N;
+}
+
+/* ---------------- 6. 面板 ---------------- */
+const panel = document.getElementById("panel");
+let editing = false;
+
+function esc(s){
+  return String(s==null?"":s).replace(/[&<>"']/g, c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function openPanel(id){
+  S.sel = id;
+  editing = false;
+  renderPanel();
+  panel.classList.add("open");
+  document.body.classList.add("panel-open");
+  draw();
+  setTimeout(()=> focusNode(id), 60);
+  if(window.innerWidth <= 900) document.getElementById("rail").classList.remove("open");
+}
+function closePanel(){
+  panel.classList.remove("open");
+  document.body.classList.remove("panel-open");
+  S.sel = null;
+  draw();
+}
+
+/* ---------------- 5.5 换个角度讲（一段说明不够，就再讲一遍） ---------------- */
+/* 每个角度就是一条不同的"讲法"。同一句话读不懂，多半是入口不对：
+   有人要类比、有人要抽象、有人要看它在机器里怎么跑一遍。 */
+const ANGLES = [
+  {
+    id:"plain", label:"大白话",
+    ask:"用完全不用行话的大白话重讲一遍。可以用生活里的类比，但类比说完必须补一句「类比里哪个东西对应技术上哪个东西」，不能让类比替代定义。"
+  },
+  {
+    id:"why", label:"为什么非要有它",
+    ask:"讲清这个抽象为什么必须存在：它替人挡住了什么麻烦，没有它的时候会出什么具体问题，它把哪一类复杂度收进了一个概念里。"
+  },
+  {
+    id:"how", label:"在机器里怎么跑",
+    ask:"从一次真实操作出发，按时间顺序讲清计算机里到底发生了什么：谁发起、经过哪些环节、哪些数据结构或报文或状态被读写、出错时走哪条路。"
+  },
+  {
+    id:"eg", label:"给个具体例子",
+    ask:"给一个带真实数值、命令或报文的例子，把过程一步一步走一遍或算出来，让人能照着复现，不要停留在描述。"
+  },
+  {
+    id:"vs", label:"和易混的比",
+    ask:"挑最容易和它混淆的一到两个概念，逐条对比：差在哪一步、什么时候必须区分、混了会出什么错。"
+  }
+];
+
+function paintXtra(N, loading){
+  const box = panel.querySelector("#pXtra");
+  if(!box) return;
+  const a = ANGLES.find(x=> x.id === N.lastAngle);
+  const note = panel.querySelector("#pXNote");
+  if(note) note.style.display = (a && !loading && ((N.angles||{})[a.id])) ? "none" : "";
+  if(!a){ box.innerHTML = ""; box.style.display = "none"; return; }
+  box.style.display = "";
+
+  if(loading){
+    box.innerHTML = `<div class="p-x"><div class="p-x-h">${esc(a.label)} · 正在讲…</div>
+      <div class="x-sk"><i></i><i></i><i></i></div></div>`;
+    return;
+  }
+  const d = ((N.angles||{})[a.id]);
+  if(!d){ box.innerHTML = ""; box.style.display = "none"; return; }
+
+  const termsHtml = (d.terms||[]).map(w=>{
+    const p = splitBilingual(w);
+    const hit = findNodeByName(p.zh) || (p.en ? findNodeByName(p.en) : null);
+    return hit
+      ? `<button class="chip" data-kwgoto="${esc(hit.name)}" title="已经在图上，点开看">${chipLabel(w)}</button>`
+      : `<button class="chip ghost" data-add="${esc(w)}" title="图上还没有，点 + 挂上去"><span class="plus">+</span>${chipLabel(w)}</button>`;
+  }).join("");
+
+  box.innerHTML = `
+    <div class="p-x">
+      <div class="p-x-h">${esc(a.label)}<button class="p-x-x" id="pXClose">收起</button></div>
+      ${(d.paras||[]).map(p=>`<p class="p-x-para">${esc(p)}</p>`).join("")}
+      ${d.takeaway ? `<p class="p-x-take"><i>记住</i><span>${esc(d.takeaway)}</span></p>` : ""}
+      <div class="p-x-l">这次讲到的词 · 图上还没有的点 + 加进拓扑</div>
+      <div class="chips">${termsHtml || '<span style="font-size:calc(11.5px * var(--fs));color:var(--dim-2)">这次没带出新的专有名词</span>'}</div>
+    </div>`;
+
+  const xc = box.querySelector("#pXClose");
+  if(xc) xc.onclick = ()=>{ N.lastAngle = null; paintXtra(N); };
+
+  box.querySelectorAll("[data-kwgoto]").forEach(b=>{
+    b.onclick = ()=>{
+      const t = findNodeByName(b.dataset.kwgoto);
+      if(t) openPanel(t.id);
+    };
+  });
+  // 注意：这里必须晚于 bindPanel 绑定，覆盖掉它的通用处理，才能顺手刷新本次讲解的芯片状态
+  box.querySelectorAll("[data-add]").forEach(b=>{
+    b.onclick = ()=>{
+      const made = addKeyword(N.id, b.dataset.add);
+      reheat(.9); renderAll(); rerenderKeepScroll();
+      toast(`<b>${esc(made.name)}</b> 已挂到拓扑上`);
+    };
+  });
+}
+
+/* 模型偶尔会吐出不严格的 JSON（字符串里混进裸双引号、尾逗号、代码块围栏）。
+   这里做一个宽容解析：先直接试，失败再修一次。 */
+function repairJson(s){
+  let out = "", inStr = false;
+  for(let i=0;i<s.length;i++){
+    const ch = s[i];
+    if(inStr && ch === "\\"){ out += ch + (s[i+1]||""); i++; continue; }
+    if(ch === '"'){
+      if(!inStr){ inStr = true; out += ch; continue; }
+      let j = i+1;
+      while(j < s.length && /\s/.test(s[j])) j++;
+      const nx = s[j];
+      // 后面紧跟 , : } ] 或结束，才算合法闭合；否则是字符串里的裸引号，转义掉
+      if(nx === undefined || ",:}]".indexOf(nx) >= 0){ inStr = false; out += ch; }
+      else out += '\\"';
+      continue;
+    }
+    out += ch;
+  }
+  return out;
+}
+function parseLooseJSON(txt){
+  let s = String(txt||"").trim();
+  s = s.replace(/^```[a-z]*\s*/i, "").replace(/```\s*$/, "").trim();
+  const a = s.indexOf("{"), b = s.lastIndexOf("}");
+  if(a >= 0 && b > a) s = s.slice(a, b+1);
+  const cands = [s, s.replace(/,\s*([}\]])/g,"$1")];
+  const fixed = repairJson(s);
+  cands.push(fixed, fixed.replace(/,\s*([}\]])/g,"$1"));
+  for(const t of cands){ try{ return JSON.parse(t); }catch(e){} }
+  return null;
+}
+
+async function askAngle(N, angle, strict){
+  const cfg = getCfg();
+  const j = await postChat({
+    model: cfg.model || "deepseek-flash",
+    temperature: strict ? 0 : 0.5,
+    response_format: {type:"json_object"},
+    messages: [
+      {role:"system", content: SYS_DOMAIN +
+        "你是能把抽象技术概念讲到人真懂的人。只输出 JSON，不要 markdown 代码块，不要任何多余文字。"},
+      {role:"user", content:
+        `概念：${N.name}${(N.alias||[]).length ? "（又叫 " + N.alias.slice(0,3).join(" / ") + "）" : ""}\n`+
+        `已知的一句话定义：${N.brief || "（没有）"}\n\n`+
+        `现在换个角度重新讲这个概念。角度要求：${angle.ask}\n\n`+
+        `输出 JSON：{"paras":["2到4段，每段80到140字，写成人话，不要项目符号、不要小标题"],`+
+        `"takeaway":"一句话，30字内，读完能记住的那种",`+
+        `"terms":["这次讲解里真正出现的专有名词，4到8个；一律给中文名，英文原名用括号附在后面，例如 四元组（4-tuple）"]}` +
+        (strict ? "\n\n重要：必须是严格合法的 JSON。字符串内部不允许出现未经转义的英文双引号（引用术语请用「」），不要尾逗号。" : "")}
+    ]
+  });
+  return parseLooseJSON(j?.choices?.[0]?.message?.content || "");
+}
+
+async function explainAngle(N, angle){
+  const cfg = getCfg();
+  if(!cfg.key || !cfg.base){
+    toast("换个角度讲要模型在场 —— 点右上角「接入模型」");
+    return;
+  }
+  if(!N.angles) N.angles = {};
+  N.lastAngle = angle.id;
+  panel.querySelectorAll("[data-angle]").forEach(b=> b.classList.toggle("on", b.dataset.angle === angle.id));
+
+  if(N.angles[angle.id]){ paintXtra(N); return; }   // 讲过的直接翻出来，不重复花钱
+  if(N._busy) return;
+  N._busy = true;
+  paintXtra(N, true);
+
+  try{
+    let d = await askAngle(N, angle, false);
+    if(!d || !(d.paras||[]).length) d = await askAngle(N, angle, true);   // 坏了再要一次，temperature 0
+    if(!d) throw new Error("返回不是合法 JSON，再点一次试试");
+    N.angles[angle.id] = {
+      paras: (Array.isArray(d.paras) ? d.paras : []).slice(0,5).map(x=> String(x)).filter(Boolean),
+      takeaway: d.takeaway ? String(d.takeaway).slice(0,60) : "",
+      terms: (Array.isArray(d.terms) ? d.terms : []).slice(0,10).map(x=> String(x).trim()).filter(Boolean),
+      at: Date.now()
+    };
+    save();
+    if(S.sel === N.id) paintXtra(N);
+  }catch(err){
+    if(S.sel === N.id) paintXtra(N);
+    toast("没讲成：" + esc(String((err && err.message)||"网络错误").slice(0,70)));
+  }finally{
+    N._busy = false;
+  }
+}
+
+function rerenderKeepScroll(){
+  const sc = panel.querySelector(".p-scroll");
+  const top = sc ? sc.scrollTop : 0;
+  renderPanel();
+  const sc2 = panel.querySelector(".p-scroll");
+  if(sc2) sc2.scrollTop = top;
+}
+
+function renderPanel(){
+  const N = S.sel ? nodeById(S.sel) : null;
+  if(!N){ panel.classList.remove("open"); return; }
+
+  const c = CAT_COLOR[N.cat] || CAT_COLOR["待补充"];
+  const nbs = neighbors(N.id);
+  const exactId = w => NAME_IDX[norm(w)];
+  const kwKnown = w => {
+    const p = splitBilingual(w);
+    return findNodeByName(p.zh) || (p.en ? findNodeByName(p.en) : null);
+  };
+  const knownWords = N.kw.filter(w=>{
+    if(kwKnown(w)) return false;              // 中文名或英文名任一已在图上就不重复挂
+    const p = splitBilingual(w);
+    const id = exactId(p.zh) || (p.en ? exactId(p.en) : null);
+    return !id || !nodeById(id);              // 词库里有但还没上图的，也留着
+  });
+
+  const statusLabel = N.status==="mastered" ? "已掌握" : (N.status==="fuzzy" ? "待理清" : "未标记");
+
+  const pointsHtml = (N.points||[]).length
+    ? `<ul class="p-points">${N.points.map(p=>`<li>${esc(p)}</li>`).join("")}</ul>`
+    : `<div class="p-points" style="color:var(--dim-2);font-size:calc(12.5px * var(--fs));line-height:1.8">
+         这个词还没有解释。<br>把你知道的写进去，或者点下面的「接入模型」让它自己补。
+       </div>`;
+
+  const defLinks = (DICT[N.id] && DICT[N.id].links) || [];
+  const missing = defLinks.filter(x=> DICT[x[0]] && !nodeById(x[0]) && x[0] !== N.id);
+  const missingHtml = missing.map(x=>
+    '<button class="chip ghost" data-pull="'+esc(x[0])+'" title="把它拉进拓扑"><span class="+"></span>'+esc(DICT[x[0]].name)+'<span class="rel">'+esc(x[1])+'</span></button>'
+  ).join('');
+
+  const nbsHtml = nbs.length
+    ? nbs.map(x=>{
+        const o = nodeById(x.id);
+        return `<button class="chip" data-goto="${esc(x.id)}">${esc(o.name)}<span class="rel">${esc(x.rel)}</span></button>`;
+      }).join("")
+    : '<span style="font-size:calc(11.5px * var(--fs));color:var(--dim-2)">'+(missing.length ? '图上还没有它的对手 —— 下面这些可以拉进来' : '还没连上任何东西')+'</span>';
+
+  const kwHtml = knownWords.length
+    ? knownWords.map(w=>{
+        const p = splitBilingual(w);
+        const has = !!(exactId(p.zh) || (p.en ? exactId(p.en) : null));
+        return `<button class="chip ${has?'':'ghost'}" data-add="${esc(w)}" title="${has?'挂上后自带解释':'这个词库里还没有，挂上后你补'}"
+                 ><span class="plus">+</span>${chipLabel(w)}</button>`;
+      }).join("")
+    : `<span style="font-size:calc(11.5px * var(--fs));color:var(--dim-2)">${
+        (N.kw||[]).length ? "延伸点都已经在图上" : "还没有延伸词 —— 点下面的「让模型补全」，它会带出来"
+      }</span>`;
+
+  const aliasHtml = (N.alias||[]).length
+    ? `<div class="p-alias">${esc(N.alias.join(" · "))}</div>` : "";
+
+  // 重名检测：同一个词被建了两遍时，这里有话直说，并给一个"合并"的出口
+  const twins = twinsOf(N);
+  const dupHtml = twins.length
+    ? `<div class="p-dup">
+         图上还有 ${twins.length} 个跟它同义的节点：<b>${twins.map(t=>esc(t.name)).join("、")}</b>
+         <button class="dup-btn" data-mergeall="1">合并成一个</button>
+       </div>` : "";
+
+  panel.innerHTML = `
+    <div class="p-scroll">
+      <div class="p-top">
+        <span class="p-cat"><i style="background:${c}"></i>${esc(N.cat)}</span>
+        <span class="p-cat" style="color:${N.status==='mastered'?'#7fc0b1':(N.status==='fuzzy'?'#d99b9b':'var(--dim)')}">
+          ${statusLabel}
+        </span>
+        <button class="p-close" id="pClose" aria-label="关闭">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg>
+        </button>
+      </div>
+      <h2>${esc(N.name)}</h2>
+      ${aliasHtml}
+      ${dupHtml}
+      <p class="p-brief" id="pBrief">${esc(N.brief || "（待补充）")}</p>
+
+      <div class="p-angles" id="pAngles">
+        ${ANGLES.map(a=>{
+          const has = !!(N.angles && N.angles[a.id]);
+          const on  = N.lastAngle === a.id;
+          return `<button class="p-angle ${on?'on':''}" data-angle="${a.id}" title="${esc(a.ask)}">${esc(a.label)}${has?'<i class="dot"></i>':''}</button>`;
+        }).join("")}
+      </div>
+      <div class="p-x-note" id="pXNote" style="font-size:calc(11px * var(--fs));color:var(--dim-2);margin-top:7px">
+        ${hasKey()
+          ? "一段说明不一定讲得通 —— 点上面任意一个，让它换种方式再讲一遍；新冒出来的词可以直接挂进拓扑。"
+          : "换角度重讲要模型在场 —— 先点右上角「接入模型」接上，再来点这些按钮。"}
+      </div>
+      <div id="pXtra"></div>
+
+      <div class="p-sec">
+        <div class="p-label">关键点<span class="hint" style="margin-left:auto">${(N.points||[]).length} 条</span></div>
+        <div id="pPoints">${pointsHtml}</div>
+      </div>
+
+      <div class="p-sec">
+        <div class="p-label">关联<span class="hint" style="margin-left:auto">${nbs.length} 个</span></div>
+        <div class="chips">${nbsHtml}</div>
+        ${missing.length ? '<div class="chips" style="margin-top:8px">'+missingHtml+'</div>' : ''}
+      </div>
+
+      <div class="p-sec">
+        <div class="p-label">延伸关键词<span class="hint" style="margin-left:auto;letter-spacing:0">点 + 挂上去 · 虚线的是空壳</span></div>
+        <div class="chips">${kwHtml}</div>
+      </div>
+
+      <div class="p-sec">
+        <div class="p-label">我的笔记<span class="hint" style="margin-left:auto;letter-spacing:0">自动保存</span></div>
+        <textarea class="p-notes" id="pNotes" placeholder="用自己的话重写一遍；写下还没想通的地方…">${esc(notesOf(N.id))}</textarea>
+      </div>
+
+    </div>
+    <div class="p-dock">
+      <div class="p-dock-btns">
+        <button class="status-btn ${N.status==='mastered'?'active':''}" data-status="mastered">已掌握</button>
+        <button class="status-btn rose ${N.status==='fuzzy'?'active':''}" data-status="fuzzy">待理清</button>
+        <button class="status-btn" id="pEdit">编辑</button>
+        ${N.manual ? `<button class="status-btn" id="pAi">让模型补全</button>` : ""}
+        <button class="status-btn" id="pDel" style="color:#c98a8a" title="删除这个节点（Delete 键也行）">删除</button>
+      </div>
+    </div>
+  `;
+  bindPanel(N);
+  paintXtra(N);
+}
+
+function bindPanel(N){
+  panel.querySelector("#pClose").onclick = closePanel;
+
+  panel.querySelectorAll("[data-angle]").forEach(b=>{
+    b.onclick = ()=>{
+      const a = ANGLES.find(x=> x.id === b.dataset.angle);
+      if(a) explainAngle(N, a);
+    };
+  });
+
+  panel.querySelectorAll("[data-goto]").forEach(b=>{
+    b.onclick = ()=> openPanel(b.dataset.goto);
+  });
+  panel.querySelectorAll('[data-pull]').forEach(b=>{
+    b.onclick = ()=>{
+      const t = b.dataset.pull;
+      const def = ((DICT[N.id]||{}).links||[]).find(x=>x[0]===t);
+      addLinkRaw(N.id, t, def ? def[1] : '相关');
+      const NN = ensureNode(t);
+      reheat(.9);
+      if(NN) NN.popAt = nowMs();
+      save(); renderAll(); renderPanel();
+      toast('<b>'+esc((NN&&NN.name)||t)+'</b> 已拉进拓扑');
+    };
+  });
+
+  panel.querySelectorAll("[data-add]").forEach(b=>{
+    b.onclick = ()=>{
+      const w = b.dataset.add;
+      const created = addKeyword(N.id, w);
+      toast(`<b>${esc(created.name)}</b> 已挂到拓扑上`);
+      renderPanel();
+    };
+  });
+  panel.querySelectorAll("[data-status]").forEach(b=>{
+    b.onclick = ()=>{
+      const s = b.dataset.status;
+      N.status = (N.status === s) ? "new" : s;
+      save(); renderPanel(); renderStats(); renderQueue();
+    };
+  });
+  const notes = panel.querySelector("#pNotes");
+  let t = null;
+  notes.oninput = ()=>{
+    clearTimeout(t);
+    t = setTimeout(()=>{ setNote(N.id, notes.value); }, 400);
+  };
+  notes.onblur = ()=>{ setNote(N.id, notes.value); };
+
+  const ed = panel.querySelector("#pEdit");
+  if(ed) ed.onclick = ()=> renderEdit(N);
+
+  const ai = panel.querySelector("#pAi");
+  if(ai) ai.onclick = ()=>{
+    if(!getCfg().key){ toast("先去右上角「接入模型」填 Key"); return; }
+    enrich(N, N.name);
+  };
+
+  const del = panel.querySelector("#pDel");
+  if(del) del.onclick = ()=> confirmDelete(N);
+
+  const mrg = panel.querySelector("[data-mergeall]");
+  if(mrg) mrg.onclick = ()=> mergeTwinsInto(N);
+}
+
+/* ---------------- 6.5 删除节点 / 合并重复 ---------------- */
+function deleteNode(N){
+  if(!N) return;
+  const wasSel = (S.sel === N.id);
+  S.links = S.links.filter(l=> l.s!==N.id && l.t!==N.id);
+  S.nodes = S.nodes.filter(x=> x.id!==N.id);
+  if(wasSel){ S.sel = null; closePanel(); }
+  save(); renderAll(); reheat(.5);
+  toast(`已删除 <b>${esc(N.name)}</b>`);
+}
+
+function confirmDelete(N){
+  const n = S.links.filter(l=> l.s===N.id || l.t===N.id).length;
+  openModal(`
+    <h3>删除「${esc(N.name)}」？</h3>
+    <p class="sub">节点和它连着的 ${n} 条关系一起删掉，其它概念不受影响。
+      ${N.manual ? "" : "这个词来自内置词库，删掉之后要是再问到它，还会重新长出来。"}
+      <br>删了就回不来，想留底先「导出」。</p>
+    <div class="modal-actions">
+      <button class="btn" id="dlgNo">算了</button>
+      <button class="btn" id="dlgYes" style="background:rgba(201,111,111,.16);border-color:rgba(201,111,111,.5);color:#e8b3b1">删除</button>
+    </div>`);
+  modalBox.querySelector("#dlgNo").onclick = closeModal;
+  modalBox.querySelector("#dlgYes").onclick = ()=>{ closeModal(); deleteNode(N); };
+}
+
+/* 找同义节点：名字或别名撞上就算 */
+function twinsOf(N){
+  const keys = new Set([norm(N.name), ...(N.alias||[]).map(norm)]);
+  return S.nodes.filter(x=> x.id !== N.id && (
+    keys.has(norm(x.name)) || (x.alias||[]).some(a=> keys.has(norm(a)))
+  ));
+}
+const richness = n => (n.brief ? 2 : 0) + (n.points||[]).length + ((n.kw||[]).length ? 1 : 0);
+
+function mergeNodes(intoId, fromId){
+  const A = nodeById(intoId), B = nodeById(fromId);
+  if(!A || !B || A.id === B.id) return;
+  if(!A.brief && B.brief) A.brief = B.brief;
+  if((B.points||[]).length > (A.points||[]).length) A.points = B.points;
+  if((B.kw||[]).length > (A.kw||[]).length) A.kw = B.kw;
+  if(B.angles){
+    A.angles = A.angles || {};
+    Object.keys(B.angles).forEach(k=>{ if(!A.angles[k]) A.angles[k] = B.angles[k]; });
+  }
+  A.alias = Array.from(new Set([...(A.alias||[]), B.name, ...(B.alias||[])]
+    .filter(x=> x && norm(x) !== norm(A.name))));
+  // 边搬到 A 上，然后删掉 B
+  const moves = S.links.filter(l=> l.s===B.id || l.t===B.id)
+    .map(l=> l.s===B.id ? {s:A.id, t:l.t, rel:l.rel} : {s:l.s, t:A.id, rel:l.rel})
+    .filter(m=> m.s !== m.t);
+  S.links = S.links.filter(l=> l.s!==B.id && l.t!==B.id);
+  S.nodes = S.nodes.filter(x=> x.id !== B.id);
+  moves.forEach(m=> addLinkRaw(m.s, m.t, m.rel));
+}
+
+function mergeTwinsInto(N){
+  const twins = twinsOf(N);
+  if(!twins.length) return;
+  const all = [N, ...twins].sort((a,b)=> richness(b) - richness(a));  // 内容最多的那个留下
+  const target = all[0];
+  all.slice(1).forEach(x=> mergeNodes(target.id, x.id));
+  S.sel = target.id;
+  save(); renderAll(); reheat(.6);
+  renderPanel();
+  toast(`已合并成 1 个「<b>${esc(target.name)}</b>」`);
+}
+
+function renderEdit(N){
+  panel.innerHTML = `
+    <div class="p-scroll">
+      <div class="p-top">
+        <span class="p-cat"><i style="background:${CAT_COLOR[N.cat]||'#6b6a66'}"></i>编辑</span>
+        <button class="p-close" id="pClose">
+          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 3l8 8M11 3l-8 8"/></svg>
+        </button>
+      </div>
+      <h2>${esc(N.name)}</h2>
+      <div class="field" style="margin-top:16px">
+        <label>一句话定义</label>
+        <textarea class="edit-field" id="eBrief" rows="3">${esc(N.brief)}</textarea>
+      </div>
+      <div class="field">
+        <label>关键点（一行一条）</label>
+        <textarea class="edit-field" id="ePoints" rows="7">${esc((N.points||[]).join("\n"))}</textarea>
+      </div>
+      <div class="field">
+        <label>延伸关键词（逗号分隔）</label>
+        <input class="edit-field" id="eKw" value="${esc((N.kw||[]).join("，"))}">
+      </div>
+      <div class="field">
+        <label>类别</label>
+        <select class="edit-field" id="eCat">
+          ${CATS.map(c=>`<option value="${c}" ${c===N.cat?"selected":""}>${c}</option>`).join("")}
+        </select>
+      </div>
+      <div class="p-actions">
+        <button class="btn primary" id="eSave">保存</button>
+        <button class="btn" id="eCancel">取消</button>
+      </div>
+    </div>`;
+  panel.querySelector("#pClose").onclick = closePanel;
+  panel.querySelector("#eCancel").onclick = ()=> renderPanel();
+  panel.querySelector("#eSave").onclick = ()=>{
+    N.brief = panel.querySelector("#eBrief").value.trim();
+    N.points = panel.querySelector("#ePoints").value.split("\n").map(s=>s.trim()).filter(Boolean);
+    N.kw = panel.querySelector("#eKw").value.split(/[,，、]/).map(s=>s.trim()).filter(Boolean);
+    N.cat = panel.querySelector("#eCat").value;
+    if(!N.brief) N.brief = "（待补充）";
+    save(); renderPanel(); renderStats();
+    toast("已保存");
+  };
+}
+
+/* 笔记单独存，避免每次 save 都全量序列化 */
+function notesOf(id){
+  try{
+    const m = JSON.parse(localStorage.getItem(LS_KEY+".notes")||"{}");
+    return m[id] || "";
+  }catch(e){ return ""; }
+}
+function setNote(id, text){
+  try{
+    const m = JSON.parse(localStorage.getItem(LS_KEY+".notes")||"{}");
+    if(text.trim()) m[id] = text; else delete m[id];
+    localStorage.setItem(LS_KEY+".notes", JSON.stringify(m));
+  }catch(e){}
+}
+
+/* ---------------- 7. 提问流程 ---------------- */
+const askInput = document.getElementById("askInput");
+
+function ask(raw){
+  const q = String(raw||"").trim();
+  if(!q) return;
+  askInput.value = "";
+
+  // 多个概念用「和 / 与 / vs / 对比」拆开
+  const parts = q.split(/\s*(?:vs\.?|VS|与|和|对比|比较|区别)\s*/).map(s=>s.trim()).filter(Boolean);
+  let firstId = null;
+  let existedN = 0, addedN = 0, existedName = "";
+  const seen = new Set();                       // 同一次输入里也不许重复建点
+
+  parts.forEach((p, i)=>{
+    const bp = splitBilingual(p);
+    const key = norm(bp.zh);
+    if(seen.has(key)) return;                   // 这句里已经处理过同一个词了
+    seen.add(key);
+
+    const existing = findNodeByName(bp.zh) || (bp.en ? findNodeByName(bp.en) : null);
+    const id = existing ? existing.id : (resolve(bp.zh) || (bp.en ? resolve(bp.en) : null));
+    if(id){
+      const N = existing || ensureNode(id);
+      if(i===0) firstId = N.id;
+      if(existing){ existedN++; existedName = existing.name; }
+      if(parts.length > 1 && i > 0 && firstId) addLinkRaw(firstId, N.id, "对比");
+    } else {
+      const N = createPending(bp.zh || p);
+      if(bp.en && N) N.alias = Array.from(new Set([...(N.alias||[]), bp.en]));
+      addedN++;
+      if(i===0) firstId = N.id;
+      if(parts.length > 1 && i > 0) addLinkRaw(firstId, N.id, "对比");
+      enrich(N, bp.zh || p);
+    }
+  });
+
+  reheat(0.9);
+  renderStats(); renderQueue(); save();
+  if(firstId){
+    openPanel(firstId);
+    focusNode(firstId);
+  }
+  // 扩出来的节点跑出视野时，把整张图拉回来一次
+  setTimeout(()=>{ if(anyOffscreen()) fitView(true); }, 900);
+  if(existedN && !addedN){
+    toast(`「<b>${esc(existedName)}</b>」已经在图上，直接打开了`);   // 去重：不重复建点，也不再问一遍模型
+  }else if(parts.length > 1){
+    toast(`已展开 <b>${parts.length}</b> 个概念并建立对比关系`);
+  }
+}
+function focusNode(id){
+  const N = nodeById(id); if(!N) return;
+  const cw = W - panelOffset();
+  const p = toScreen(N.x, N.y);
+  const margin = 130;
+  if(p.x < margin || p.x > cw-margin || p.y < margin || p.y > H-margin){
+    flyTo(N.x, N.y, S.scale);            // 滑过去，不要瞬移
+  }
+}
+
+document.getElementById("askBtn").onclick = ()=> ask(askInput.value);
+askInput.addEventListener("keydown", e=>{
+  if(e.key === "Enter"){ e.preventDefault(); ask(askInput.value); }
+});
+document.addEventListener("keydown", e=>{
+  if(e.key === "/" && document.activeElement !== askInput &&
+     document.activeElement.tagName !== "TEXTAREA"){
+    e.preventDefault(); askInput.focus();
+  }
+  if(e.key === "Escape"){
+    if(document.getElementById("modal").classList.contains("open")) closeModal();
+    else if(panel.classList.contains("open")) closePanel();
+  }
+  // Delete / Backspace 删掉当前选中的概念（在输入框里打字时不算）
+  const ae = document.activeElement;
+  const typing = ae && (ae.tagName === "INPUT" || ae.tagName === "TEXTAREA" || ae.isContentEditable);
+  if(!typing && (e.key === "Delete" || e.key === "Backspace") && S.sel){
+    const N = nodeById(S.sel);
+    if(N){ e.preventDefault(); confirmDelete(N); }
+  }
+});
+
+/* 示例 */
+const EXAMPLES = ["TCP 端口 与 UDP 端口","三次握手","TIME_WAIT 太多","NAT 与端口映射","QUIC 为什么快"];
+document.getElementById("examples").innerHTML =
+  EXAMPLES.map(t=>`<button class="ex">${esc(t)}</button>`).join("");
+document.getElementById("examples").onclick = e=>{
+  const b = e.target.closest(".ex"); if(!b) return;
+  ask(b.textContent);
+};
+
+/* ---------------- 8. 统计 / 队列 / 图例 ---------------- */
+function renderStats(){
+  const el = document.getElementById("stats");
+  const mastered = S.nodes.filter(n=>n.status==="mastered").length;
+  const fuzzy = S.nodes.filter(n=>n.status==="fuzzy").length;
+  el.innerHTML = `
+    <span>概念 <b>${S.nodes.length}</b></span>
+    <span>关联 <b>${S.links.length}</b></span>
+    <span>已掌握 <b>${mastered}</b></span>
+    <span>待理清 <b>${fuzzy}</b></span>`;
+}
+function renderQueue(){
+  const list = document.getElementById("queueList");
+  const q = S.nodes.filter(n=>n.status==="fuzzy" || n.manual)
+    .sort((a,b)=>{
+      const am = a.manual?0:1, bm = b.manual?0:1;
+      return am-bm;
+    });
+  document.getElementById("queueCount").textContent = q.length;
+  if(!q.length){
+    list.innerHTML = `<div class="q-empty">空着。标记成「待理清」的概念会排到这里，<br>像一张待办清单。</div>`;
+    return;
+  }
+  list.innerHTML = q.map(n=>`
+    <div class="q-item ${n.manual?'pending':''}" data-goto="${esc(n.id)}">
+      <span class="dot"></span>
+      <span>${esc(n.name)}</span>
+      <span class="tag">${n.manual?"待补充":"待理清"}</span>
+    </div>`).join("");
+  list.onclick = e=>{
+    const it = e.target.closest("[data-goto]"); if(!it) return;
+    openPanel(it.dataset.goto); focusNode(it.dataset.goto);
+  };
+}
+function renderLegend(){
+  const used = [...new Set(S.nodes.map(n=>n.cat))];
+  document.getElementById("legend").innerHTML =
+    used.map(c=>`<span><i style="background:${CAT_COLOR[c]||'#6b6a66'}"></i>${esc(c)}</span>`).join("");
+}
+function syncEmpty(){
+  const e = document.getElementById("emptyHint");
+  if(e) e.style.display = S.nodes.length ? "none" : "grid";
+}
+function renderAll(){
+  renderStats(); renderQueue(); renderLegend(); syncEmpty(); renderFillBtn();
+}
+
+/* ---------------- 9. toast / modal ---------------- */
+let toastTimer = null;
+function toast(html){
+  const t = document.getElementById("toast");
+  t.innerHTML = html;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), 2600);
+}
+const modal = document.getElementById("modal");
+const modalBox = document.getElementById("modalBox");
+function openModal(html){
+  modalBox.innerHTML = html;
+  modal.classList.add("open");
+}
+function closeModal(){ modal.classList.remove("open"); }
+modal.onclick = e=>{ if(e.target === modal) closeModal(); };
+
+/* ---------------- 10. 模型接入（DeepSeek / 任意 OpenAI 兼容） ---------------- */
+const PROVIDERS = [
+  {id:"gateway",  label:"本机网关", base:"http://127.0.0.1:8787/v1",       model:"deepseek-flash", tip:"真 Key 留在网关进程里，这里填网关发的临时令牌。网关地址自己改一下端口。"},
+  {id:"deepseek", label:"DeepSeek", base:"https://api.deepseek.com",      model:"deepseek-flash", tip:"platform.deepseek.com 取 Key（deepseek-chat 已于 2026-07-24 下线，现在用 deepseek-flash）"},
+  {id:"openai",   label:"OpenAI",   base:"https://api.openai.com/v1",      model:"gpt-4o-mini",    tip:"platform.openai.com 取 Key"},
+  {id:"custom",   label:"自定义",   base:"",                               model:"",               tip:"任何 OpenAI 兼容网关"}
+];
+
+/* 由本机网关（ds-gateway.js）在返回页面时注入。
+   直接双击打开 HTML 文件时，这三个值就是原样占位符 —— 文件里没有任何密钥，
+   发给别人也没事，对方的 AI 功能自然是关的。 */
+const WB_INJ = { token:"__WB_TOKEN__", base:"__WB_BASE__", model:"__WB_MODEL__" };
+const INJ_ON = /^wbk-/.test(WB_INJ.token);
+
+/* 内存里的当前配置。不能只靠 localStorage —— 有些内嵌 webview / 隐私模式下
+   setItem 会静默失败，那样注入的令牌就丢了，页面会误报"模型未接"。 */
+let CFG_MEM = null;
+
+function applyInjected(){
+  if(!INJ_ON) return false;
+  CFG_MEM = { base: WB_INJ.base, model: WB_INJ.model, key: WB_INJ.token, src: "gateway" };
+  try{ localStorage.setItem(LS_CFG, JSON.stringify(CFG_MEM)); }catch(e){}
+  return true;
+}
+
+function getCfg(){
+  if(CFG_MEM) return CFG_MEM;
+  let c = {};
+  try{ c = JSON.parse(localStorage.getItem(LS_CFG)||"{}"); }catch(e){ c = {}; }
+  if(!c.base) c.base = "https://api.deepseek.com";
+  if(!c.model) c.model = "deepseek-flash";
+  return c;
+}
+/* 当前是不是走本机网关 */
+function onGateway(){
+  const c = getCfg();
+  return /^https?:\/\/(127\.0\.0\.1|localhost)/.test(String(c.base||""));
+}
+function hasKey(){
+  const c = getCfg();
+  return !!(c.key && c.base);
+}
+function syncAiBadge(){
+  const c = getCfg();
+  const on = hasKey();
+
+  const b = document.getElementById("btnSettings");
+  if(b){
+    b.textContent = on ? "模型设置" : "接入模型";
+    b.style.borderColor = on ? "rgba(79,157,141,.55)" : "";
+    b.style.color = on ? "#7fc0b1" : "";
+  }
+
+  // 状态胶囊：一眼能看出现在到底有没有模型在
+  const pill = document.getElementById("aiPill");
+  const ptx  = document.getElementById("aiPillTxt");
+  if(pill && ptx){
+    pill.classList.toggle("on", on);
+    pill.classList.toggle("warn", !on);
+    ptx.textContent = on ? ((c.model || "模型") + (onGateway() ? " · 网关" : "")) : "模型未接";
+    pill.title = on ? ("已接入 " + c.base) : "点这里接入模型";
+  }
+
+  const bn = document.getElementById("aiBanner");
+  if(bn) bn.classList.toggle("on", !on);
+}
+
+/* 没接上时的那条横幅：能一句话说清"为什么没有"，并给一条出路 */
+function syncBannerGateway(gw){
+  const bn = document.getElementById("aiBanner");
+  const main = document.getElementById("bnMain");
+  const note = document.getElementById("bnNote");
+  const go = document.getElementById("bnGo");
+  if(!bn || !main || !note || !go) return;
+  if(gw){
+    bn.classList.add("ok");
+    main.innerHTML = "模型没接：<b>这份页面不是从网关打开的</b>";
+    go.textContent = "从网关打开（:" + gw.port + "）";
+    note.textContent = "网关已就绪 · " + (gw.model || "模型已载入");
+  }else{
+    bn.classList.remove("ok");
+    main.innerHTML = "模型还没接上，现在只有本地词库";
+    go.textContent = "去网关打开";
+    note.textContent = "没在跑？双击目录里的「启动知识拓扑.bat」";
+  }
+}
+
+document.getElementById("bnGo").onclick = async ()=>{
+  const gw = await probeGateway();
+  if(gw) location.href = "http://127.0.0.1:" + gw.port + "/";
+  else toast("网关没在跑 —— 双击目录里的「启动知识拓扑.bat」，再回来看");
+};
+document.getElementById("aiPill").onclick = ()=>{
+  document.getElementById("btnSettings").click();
+};
+
+/* 字号：按钮 + 快捷键 */
+document.getElementById("fsMinus").onclick = ()=> setFs(UI_K - 0.06);
+document.getElementById("fsPlus").onclick  = ()=> setFs(UI_K + 0.06);
+document.addEventListener("keydown", e=>{
+  if(!(e.ctrlKey || e.metaKey)) return;
+  if(e.key === "=" || e.key === "+"){ e.preventDefault(); setFs(UI_K + 0.06); }
+  else if(e.key === "-" || e.key === "_"){ e.preventDefault(); setFs(UI_K - 0.06); }
+  else if(e.key === "0"){ e.preventDefault(); setFs(1.1); }
+});
+
+/* 探一下本机网关：默认 8787，也试 8899，命中就把地址和模型填好 */
+async function probeGateway(){
+  const ports = [8787, 8899, 8788];
+  for(const p of ports){
+    try{
+      const ctl = new AbortController();
+      const t = setTimeout(()=> ctl.abort(), 900);
+      const r = await fetch("http://127.0.0.1:" + p + "/health", { signal: ctl.signal });
+      clearTimeout(t);
+      if(!r.ok) continue;
+      const j = await r.json();
+      if(j && j.ok) return { port: p, model: j.model, upstream: j.upstream, source: j.source };
+    }catch(e){ /* 这个端口没起 */ }
+  }
+  return null;
+}
+
+document.getElementById("btnSettings").onclick = async ()=>{
+  const c = getCfg();
+  const normBase = s => String(s||"").replace(/\/+$/,"");
+  const isGw = onGateway();
+  const cur = PROVIDERS.find(p=> p.base && normBase(p.base) === normBase(c.base)) || PROVIDERS[3];
+  const noteHtml = isGw
+    ? "现在走本机网关：Key 这一栏是网关发的<b>临时令牌</b>（wbk- 开头，12 小时自动换新）。<br>真密钥在网关进程里，磁盘上的 HTML 文件不含任何密钥，发给别人也不会泄。"
+    : "Key 只存在这台机器的浏览器本地存储里，不写进 HTML 文件、不发给第三方。换台电脑要重填一次。";
+
+  openModal(`
+    <h3>接入模型</h3>
+    <p class="sub">接上之后，词库里没有的概念会自动去问模型，补成一张完整的卡；词库有的照旧走本地，不花 token。</p>
+    <div class="gw" id="gwBox">
+      <div class="gw-h"><span class="gw-dot"></span><b>本机网关</b><span class="gw-t">正在找…</span></div>
+      <div class="gw-b">真 Key 只留在网关进程里，页面拿到的是几小时后自动失效的临时令牌。</div>
+    </div>
+    <div class="field"><label>服务商</label>
+      <div class="chips" id="pvChips">
+        ${PROVIDERS.map(p=>`<button class="chip ${p.id===cur.id?'on':''}" data-pv="${p.id}">${esc(p.label)}</button>`).join("")}
+      </div>
+    </div>
+    <div class="field"><label>接口地址（OpenAI 兼容）</label>
+      <input id="cfgBase" value="${esc(c.base)}" placeholder="https://api.deepseek.com"></div>
+    <div class="field"><label>模型</label>
+      <input id="cfgModel" value="${esc(c.model)}" placeholder="deepseek-flash"></div>
+    <div class="field"><label>API Key</label>
+      <input id="cfgKey" type="password" value="${esc(c.key||"")}" placeholder="sk-... 或网关令牌 wbk-..."></div>
+    <div class="note" id="cfgNote">${noteHtml}</div>
+    <div class="modal-actions">
+      <button class="btn" id="cfgTest">测一下</button>
+      <button class="btn" id="cfgClear">清空</button>
+      <button class="btn primary" id="cfgSave">保存</button>
+    </div>`);
+
+  const $ = s => modalBox.querySelector(s);
+
+  // 网关状态：探到了就一句话说清，并用它把地址/模型填好（令牌仍要用户点一下才写）
+  const gw = await probeGateway();
+  const box = $("#gwBox");
+  if(gw){
+    box.classList.add("on");
+    const shortSrc = String(gw.source || "网关").replace(/（.*?）/g, "").trim();
+    box.querySelector(".gw-t").textContent = "已就绪 · 端口 " + gw.port;
+    box.querySelector(".gw-b").innerHTML =
+      "模型 <b>" + esc(gw.model || "?") + "</b> · 凭据来自 " + esc(shortSrc) +
+      "<br>" + (isGw
+        ? "当前已经在用它了。地址和令牌都是打开页面时自动带上的，不用手填。"
+        : "点一下这块，地址和模型会自动填成 http://127.0.0.1:" + gw.port + "/v1（令牌要另外贴）。");
+    box.onclick = ()=>{
+      modalBox.querySelectorAll("[data-pv]").forEach(x=> x.classList.toggle("on", x.dataset.pv === "gateway"));
+      $("#cfgBase").value = "http://127.0.0.1:" + gw.port + "/v1";
+      $("#cfgModel").value = gw.model || "deepseek-flash";
+      $("#cfgKey").focus();
+      $("#cfgNote").innerHTML = "走网关时 Key 这一栏填<b>网关发的令牌</b>（wbk- 开头）。<br>令牌只在网关进程内存/本机文件里，页面本身不含任何密钥。";
+    };
+  }else{
+    box.classList.add("off");
+    box.querySelector(".gw-t").textContent = "没在跑";
+    box.querySelector(".gw-b").innerHTML =
+      "想要「一次授权、以后不用管」，在工具目录里跑：<br>" +
+      "<code>node ds-gateway.js</code> 然后打开 http://127.0.0.1:8787/ ，页面会自己带上临时令牌。";
+  }
+
+  modalBox.querySelectorAll("[data-pv]").forEach(b=>{
+    b.onclick = ()=>{
+      const p = PROVIDERS.find(x=>x.id===b.dataset.pv);
+      modalBox.querySelectorAll("[data-pv]").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on");
+      if(p.base){ $("#cfgBase").value = p.base; $("#cfgModel").value = p.model; }
+      $("#cfgNote").innerHTML = esc(p.tip) +
+        "<br>Key 只存在这台机器的浏览器本地存储里，不写进 HTML 文件、不发给第三方。";
+    };
+  });
+
+  $("#cfgTest").onclick = async ()=>{
+    const tmp = {
+      base: $("#cfgBase").value.trim(),
+      model: $("#cfgModel").value.trim(),
+      key: $("#cfgKey").value.trim()
+    };
+    if(!tmp.key){ toast("先填 Key"); return; }
+    $("#cfgTest").textContent = "测试中…";
+    try{
+      const j = await postChat({
+        model: tmp.model || "deepseek-flash",
+        max_tokens: 120,
+        messages: [{role:"user", content:"只回两个字：可用"}]
+      }, tmp);
+      const msg = j?.choices?.[0]?.message || {};
+      const txt = (msg.content || "").trim().slice(0, 20) ||
+                  ((msg.reasoning_content || "").trim() ? "（思考型模型，已响应）" : "");
+      $("#cfgTest").textContent = "通了";
+      toast("通了 · 模型回了「" + esc(txt || "空") + "」");
+    }catch(err){
+      $("#cfgTest").textContent = "测一下";
+      toast("没通：" + esc(err.message || "网络错误") + "（Key 或地址不对）");
+    }
+  };
+
+  $("#cfgSave").onclick = ()=>{
+    const cfg = {
+      base: $("#cfgBase").value.trim() || "https://api.deepseek.com",
+      model: $("#cfgModel").value.trim() || "deepseek-flash",
+      key: $("#cfgKey").value.trim()
+    };
+    try{ localStorage.setItem(LS_CFG, JSON.stringify(cfg)); }catch(e){}
+    CFG_MEM = cfg;                 // 内存里也换掉，避免注入的旧值盖住这次保存
+    closeModal();
+    syncAiBadge();
+    toast(cfg.key ? "已接上 <b>" + esc(cfg.model) + "</b> · 未知概念会自动补全" : "已保存地址（没有 Key，仍走本地词库）");
+  };
+
+  $("#cfgClear").onclick = ()=>{
+    try{ localStorage.removeItem(LS_CFG); }catch(e){}
+    CFG_MEM = null;
+    closeModal(); syncAiBadge(); toast("已清空模型配置");
+  };
+};
+
+async function postChat(body, cfgOverride){
+  const cfg = cfgOverride || getCfg();
+  if(!cfg.key || !cfg.base) throw new Error("没有配置 Key");
+  const url = cfg.base.replace(/\/+$/,"") + "/chat/completions";
+  const headers = {"Content-Type":"application/json","Authorization":"Bearer "+cfg.key};
+  let r = await fetch(url, {method:"POST", headers, body: JSON.stringify(body)});
+  // 少数网关不认 response_format，去掉再试一次
+  if(r.status === 400 && body.response_format){
+    const b2 = Object.assign({}, body);
+    delete b2.response_format;
+    r = await fetch(url, {method:"POST", headers, body: JSON.stringify(b2)});
+  }
+  if(!r.ok){
+    let detail = "";
+    try{ const e = await r.json(); detail = e?.error?.message || ""; }catch(_){}
+    if(r.status === 401 && onGateway())
+      throw new Error("网关令牌过期了 —— 重新打开一次 http://127.0.0.1:8787/ 就自动换新");
+    throw new Error("HTTP " + r.status + (detail ? " " + detail.slice(0,60) : ""));
+  }
+  return r.json();
+}
+
+/* 语境定调：同一个词在不同领域是两个概念，这里只认计算机/AI 那一个 */
+const SYS_DOMAIN =
+  "你在给一个计算机与 AI 工程方向的知识图谱补概念。" +
+  "判断词义时一律取计算机/AI 语境的含义，不要取生活或物理义：" +
+  "current 是「当前的」不是电流；token 是「令牌/词元」不是代币；port 是「端口」不是港口；" +
+  "kernel 是「内核」不是果仁；thread 是「线程」不是线；cache 是「缓存」不是藏东西。" +
+  "若某个词在计算机语境里确实没有意义，就在 brief 里直接说明它更可能是别的领域术语。";
+const SYS_SCOPE = SYS_DOMAIN + "只输出 JSON，不要 markdown 代码块，不要任何多余文字。";
+
+/* 把图上已有的概念名报给模型，帮它判断语境与用词 */
+function contextHint(){
+  const names = S.nodes.slice(0, 14).map(n=> n.name).filter(Boolean);
+  if(!names.length) return "";
+  return "当前图谱里已有的概念（用来判断语境与用词）：" + names.join("、") + "。";
+}
+
+async function aiExplain(name){
+  const cfg = getCfg();
+  if(!cfg.key || !cfg.base) return null;
+  const j = await postChat({
+    model: cfg.model || "deepseek-flash",
+    temperature: 0.3,
+    response_format: {type:"json_object"},
+    messages: [
+      {role:"system", content: SYS_SCOPE},
+      {role:"user", content:
+        `解释概念「${name}」。${contextHint()}\n\n`+
+        `输出 JSON：`+
+        `{"name":"规范中文名；没有通行中文译名就保留用户输入的原词",`+
+        `"alias":["用户输入的原词","英文原名","常见缩写"],`+
+        `"brief":"一句话定义，80 字内，不用比喻",`+
+        `"points":["关键点，每条一句话，讲清机制或边界，3到5条"],`+
+        `"keywords":["5到8个延伸概念，用中文名，英文原名用括号附在后面，例如 线程（thread）"],`+
+        `"related":["最相关的3到5个概念，同样用 中文（english） 的写法"]}`}
+    ]
+  });
+  const txt = j?.choices?.[0]?.message?.content || "";
+  const d = parseLooseJSON(txt);
+  if(!d) throw new Error("返回不是 JSON");
+  return d;
+}
+
+/* 用模型补全一个待补充节点 */
+async function enrich(N, name, opts){
+  const cfg = getCfg();
+  const silent = !!(opts && opts.silent);
+  if(!cfg.key || !cfg.base) return false;
+  if(!silent) toast(`正在问模型：<b>${esc(name)}</b> …`);
+  try{
+    const d = await aiExplain(name);
+    if(!d) return false;
+
+    // 名字：中文优先；用户输入的原词、模型给的原词、英文原名全部进 alias，
+    // 这样「current」和「当前」以后指向同一个点，不会各建一个。
+    const np = splitBilingual(d.name || name);
+    const display = String(np.zh || name).trim().slice(0, 24);
+    const alias = new Set();
+    [name, d.name, np.en].forEach(x=>{ if(x && String(x).trim()) alias.add(String(x).trim()); });
+    (Array.isArray(d.alias) ? d.alias : []).forEach(x=>{ if(x && String(x).trim()) alias.add(String(x).trim()); });
+    alias.delete(display);
+
+    // 撞名保护：这个名字已经在图上 → 不新建，把内容并进去
+    const twin = findNodeByName(display);
+    if(twin && twin.id !== N.id){
+      if(!twin.brief){ twin.brief = String(d.brief||""); }
+      if(!(twin.points||[]).length && Array.isArray(d.points)) twin.points = d.points.slice(0,8).map(String);
+      if(!(twin.kw||[]).length && Array.isArray(d.keywords)) twin.kw = d.keywords.slice(0,10).map(String);
+      twin.alias = Array.from(new Set([...(twin.alias||[]), ...alias].filter(a=> norm(a) !== norm(twin.name))));
+      if(twin.cat === "待补充") twin.cat = "核心";
+      twin.manual = false;
+      // 空壳的边搬到 twin 上，然后把空壳删掉
+      const moves = S.links.filter(l=> l.s===N.id || l.t===N.id).map(l=>
+        l.s===N.id ? {s:twin.id, t:l.t, rel:l.rel} : {s:l.s, t:twin.id, rel:l.rel});
+      S.links = S.links.filter(l=> l.s!==N.id && l.t!==N.id);
+      S.nodes = S.nodes.filter(x=> x.id !== N.id);
+      moves.forEach(m=>{ if(m.s!==m.t) addLinkRaw(m.s, m.t, m.rel); });
+      if(S.sel === N.id) S.sel = twin.id;
+      save(); renderAll(); reheat(.6);
+      if(S.sel === twin.id) renderPanel();
+      if(!silent) toast(`「<b>${esc(twin.name)}</b>」已经在图上，内容并了进去，没有新建重复点`);
+      return true;
+    }
+
+    N.name = display;
+    N.alias = Array.from(alias).slice(0, 8);
+    if(d.brief) N.brief = String(d.brief);
+    if(Array.isArray(d.points)) N.points = d.points.slice(0,8).map(String);
+    if(Array.isArray(d.keywords)) N.kw = d.keywords.slice(0,10).map(String);
+    (Array.isArray(d.related) ? d.related : []).forEach(r=>{
+      const rp = splitBilingual(r);
+      const rid = resolve(rp.zh) || (rp.en ? resolve(rp.en) : null);
+      if(rid && rid !== N.id) addLinkRaw(N.id, rid, "相关");
+    });
+    if(N.cat === "待补充") N.cat = "核心";
+    N.manual = false;
+    save(); renderAll(); reheat(.6);
+    if(S.sel === N.id) renderPanel();
+    if(!silent) toast(`<b>${esc(N.name)}</b> 已补全`);
+    return true;
+  }catch(err){
+    const why = String((err && err.message) || "网络错误").slice(0, 70);
+    if(!silent) toast("模型没应答：" + esc(why) + "<br>已保留为待补充节点，可稍后再补");
+    else console.warn("补全失败：" + why);
+    return false;
+  }
+}
+
+/* ---------------- 10.5 一键补全：把所有空壳排成一队挨个补 ---------------- */
+const pendingNodes = ()=> S.nodes.filter(n=> n.manual);
+let BATCH = { running:false, stop:false, total:0, done:0, ok:0, fail:0, cur:"" };
+const sleep = ms => new Promise(r=> setTimeout(r, ms));
+
+function renderFillBtn(){
+  const btn = document.getElementById("btnFillAll");
+  const txt = document.getElementById("fillTxt");
+  const bar = document.getElementById("fillBar");
+  const prog = document.getElementById("fillProg");
+  if(!btn || !txt) return;
+  const pend = pendingNodes().length;
+  btn.style.display = (pend || BATCH.running) ? "" : "none";
+  btn.classList.toggle("busy", BATCH.running);
+  txt.textContent = BATCH.running
+    ? `补全中 ${BATCH.done}/${BATCH.total}${BATCH.cur ? " · " + String(BATCH.cur).slice(0, 8) : ""} · 点此停止`
+    : `一键补全 · ${pend} 个待补充`;
+  if(bar) bar.classList.toggle("on", BATCH.running);
+  if(prog) prog.style.width = BATCH.running ? Math.round(BATCH.done / Math.max(1, BATCH.total) * 100) + "%" : "0%";
+}
+
+async function fillAllPending(){
+  if(BATCH.running){ BATCH.stop = true; renderFillBtn(); return; }   // 再点一次就是停
+  const pend = pendingNodes();
+  if(!pend.length){ toast("没有待补充的节点 —— 都补完了"); return; }
+  if(!hasKey() || !getCfg().key){ toast("先接入模型，再一键补全"); return; }
+
+  BATCH = { running:true, stop:false, total:pend.length, done:0, ok:0, fail:0, cur:"" };
+  renderFillBtn();
+  const t0 = Date.now();
+
+  for(const N of pend){
+    if(BATCH.stop) break;
+    if(!nodeById(N.id) || !N.manual){ BATCH.done++; renderFillBtn(); continue; }  // 期间被删/被别的方式补了
+    BATCH.cur = N.name;
+    renderFillBtn();
+    const good = await enrich(N, N.name, {silent:true});
+    good ? BATCH.ok++ : BATCH.fail++;
+    BATCH.done++;
+    renderFillBtn();
+    await sleep(200);                                   // 别把接口打成一串连发
+  }
+
+  const stopped = BATCH.stop;
+  BATCH.running = false; BATCH.stop = false; BATCH.cur = "";
+  renderFillBtn();
+  const secs = Math.max(1, Math.round((Date.now() - t0) / 1000));
+  if(stopped) toast(`已停 · 补好了 <b>${BATCH.ok}</b> 个`);
+  else toast(`补好了 <b>${BATCH.ok}</b> 个${BATCH.fail ? `，失败 ${BATCH.fail} 个` : ""} · 用了 ${secs} 秒`);
+  setTimeout(()=>{ if(anyOffscreen()) fitView(true); }, 420);
+}
+document.getElementById("btnFillAll").onclick = fillAllPending;
+
+/* ---------------- 11. 导入 / 导出 / 重置 ---------------- */
+document.getElementById("btnExport").onclick = ()=>{
+  const data = {
+    v:1,
+    exportedAt: new Date().toISOString(),
+    nodes: S.nodes.map(n=>({
+      id:n.id,name:n.name,cat:n.cat,brief:n.brief,points:n.points,
+      kw:n.kw,alias:n.alias,status:n.status,manual:n.manual,note:notesOf(n.id),
+      angles:n.angles
+    })),
+    links:S.links
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "knowledge-topology-" + new Date().toISOString().slice(0,10) + ".json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast("已导出 JSON");
+};
+
+document.getElementById("btnImport").onclick = ()=>{
+  const inp = document.createElement("input");
+  inp.type = "file"; inp.accept = ".json,application/json";
+  inp.onchange = ()=>{
+    const f = inp.files[0]; if(!f) return;
+    const fr = new FileReader();
+    fr.onload = ()=>{
+      try{
+        const d = JSON.parse(fr.result);
+        if(!d.nodes || !Array.isArray(d.nodes)) throw 0;
+        S.nodes = d.nodes.map(n=>Object.assign({vx:0,vy:0,appear:1}, n));
+        S.links = (d.links||[]).filter(l=>l&&l.s&&l.t);
+        S.sel = null;
+        layoutSeed();
+        presettle(220); save(); renderAll(); closePanel(); fitView();
+        toast("已导入 " + S.nodes.length + " 个概念");
+      }catch(e){ toast("文件格式不对，导入失败"); }
+    };
+    fr.readAsText(f);
+  };
+  inp.click();
+};
+
+document.getElementById("btnReset").onclick = ()=>{
+  openModal(`
+    <h3>重置拓扑</h3>
+    <p class="sub">会清掉全部节点、连线和笔记，回到内置示例。导出过的 JSON 可以再导回来。</p>
+    <div class="modal-actions">
+      <button class="btn" id="mCancel">算了</button>
+      <button class="btn primary" id="mOk">确认重置</button>
+    </div>`);
+  modalBox.querySelector("#mCancel").onclick = closeModal;
+  modalBox.querySelector("#mOk").onclick = ()=>{
+    try{ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_KEY+".notes"); }catch(e){}
+    freshGraph(); presettle(240); renderAll(); closePanel();
+    S.scale = 1; S.tx = W/2; S.ty = H/2;
+    fitView();
+    closeModal(); toast("已重置");
+  };
+};
+
+/* ---------------- 12. 文本抽词 ---------------- */
+const STOP = new Set(("的 了 是 在 和 与 或 就 都 而 及 等 这 那 有 没有 一个 一种 我们 你 我 它 他 他们 因为 所以 但是 如果 虽然 可以 需要 应该 通过 进行 实现 使用 对于 关于 以及 同时 已经 还是 就是 不是 这个 那个 什么 怎么 为什么 如何 非常 比较 时候 问题 东西 方面 情况 with the and for that this from are was were will can not you your they have has had into out use used using when what which how why")
+  .split(/\s+/));
+
+function extractTerms(text){
+  const out = new Map(); // term -> score
+  const low = text.toLowerCase();
+  // 1) 命中内置词库（含别名）
+  Object.keys(NAME_IDX).forEach(k=>{
+    if(k.length >= 2 && low.includes(k)){
+      const id = NAME_IDX[k];
+      const disp = DICT[id] ? DICT[id].name : k;
+      out.set(disp, 100);
+    }
+  });
+  // 2) 英文术语
+  (text.match(/[A-Za-z][A-Za-z0-9+#._\/-]{1,24}/g) || []).forEach(t=>{
+    const c = t.replace(/[.,;:]+$/,"");
+    if(c.length > 1 && !STOP.has(c.toLowerCase()) && !out.has(c)) out.set(c, 60);
+  });
+  // 3) 中文片段：只留短而像术语的，长句一律丢
+  const BAD = /[的了是就都也很会能要把被在和与或等后前不到这那我你他她它上下个些么什怎为何如因所但却而且并一有种每各]/;
+  text.split(/[，。、；：,.;:!?！？\s\/（）()《》「」“”"'=]+/).forEach(seg=>{
+    const s = seg.trim().replace(/^[0-9]+[.、]?/,"");
+    if(s.length >= 2 && s.length <= 6 && !BAD.test(s) && !STOP.has(s) && !out.has(s)) out.set(s, 40);
+  });
+  return [...out.entries()].sort((a,b)=>b[1]-a[1]).slice(0, 40).map(x=>x[0]);
+}
+
+document.getElementById("btnExtract").onclick = ()=>{
+  openModal(`
+    <h3>粘贴一段文字 · 抽概念</h3>
+    <p class="sub">把别的 AI 讲的一段话、笔记、文档片段贴进来，我挑出里面的概念，你点哪个就挂哪个。</p>
+    <div class="field">
+      <label>原文</label>
+      <textarea class="edit-field" id="exText" rows="7" placeholder="例如：TCP 通过三次握手建立连接，收到 SYN 后进入 SYN_RECV，半连接队列满则丢弃…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="exDo">抽取</button>
+    </div>
+    <div id="exOut" style="margin-top:14px"></div>`);
+  modalBox.querySelector("#exDo").onclick = ()=>{
+    const txt = modalBox.querySelector("#exText").value;
+    if(!txt.trim()){ toast("先贴点东西进去"); return; }
+    const terms = extractTerms(txt);
+    const out = modalBox.querySelector("#exOut");
+    if(!terms.length){ out.innerHTML = `<div class="note">没抽到有效概念。这段文字可能太口语化了。</div>`; return; }
+    out.innerHTML = `
+      <div class="p-label" style="margin-bottom:8px">候选 ${terms.length} 个 · 点一个挂一个</div>
+      <div class="chips">${terms.map(t=>`<button class="chip ghost" data-t="${esc(t)}"><span class="plus">+</span>${esc(t)}</button>`).join("")}</div>`;
+    out.querySelectorAll("[data-t]").forEach(b=>{
+      b.onclick = ()=>{
+        const w = b.dataset.t;
+        const anchorId = S.sel || (S.nodes[0] && S.nodes[0].id);
+        if(!anchorId){ toast("先选中一个节点，才知道挂哪儿"); return; }
+        const created = addKeyword(anchorId, w);
+        b.remove();
+        toast(`<b>${esc(created.name)}</b> 已挂到拓扑上`);
+        renderAll();
+        if(panel.classList.contains("open") && S.sel) renderPanel();
+      };
+    });
+  };
+};
+
+/* ---------------- 13. 启动 ---------------- */
+document.getElementById("railToggle").onclick = ()=>{
+  document.getElementById("rail").classList.toggle("open");
+};
+
+// 打开时先把布局算稳，再取景——避免"镜头对着还在飘的节点"
+function presettle(iters){
+  S.alpha = 1;
+  for(let i=0;i<(iters||240);i++){
+    step(1);
+    if(S.alpha < 0.02) break;
+  }
+  S.alpha = 0;
+  S.nodes.forEach(n=>{ n.vx = 0; n.vy = 0; n.appear = 1; });
+}
+
+function boot(){
+  // 网关注入的令牌必须最先落地，否则首次 renderPanel 时 hasKey() 还是 false，
+  // 面板会误显示"先接入模型"的提示。
+  const injected = applyInjected();
+  loadFs();
+  load();
+  presettle(260);
+  renderAll();
+  resize();
+
+  // 首次打开：直接展示"TCP 端口"这张卡，让人三秒看懂这工具干什么
+  const first = nodeById("tcp-port") ? "tcp-port" : (S.nodes[0] && S.nodes[0].id);
+  if(first && window.innerWidth > 900){
+    S.sel = first;
+    document.body.classList.add("noanim");
+    panel.classList.add("open");
+    document.body.classList.add("panel-open");
+    renderPanel();
+    requestAnimationFrame(()=> document.body.classList.remove("noanim"));
+  }
+  // 初始视野直接算出来
+  if(injected) toast("已接入本机网关 · <b>" + esc(WB_INJ.model) + "</b>，令牌只在这个页面里有效");
+  syncAiBadge();
+  if(!hasKey()) probeGateway().then(syncBannerGateway);   // 没接上就问一句网关在不在，把出路指出来
+  fitView();
+}
+
+/* 自动生成初始边（首次构建时 START_IDS 之间的边已在 freshGraph 处理） */
+boot();
+
+/* 输入时轻微过滤提示：命中已有节点则提示可直达 */
+askInput.addEventListener("input", ()=>{
+  const v = askInput.value.trim();
+  if(!v){ askInput.style.borderColor = ""; return; }
+  const id = resolve(v);
+  askInput.style.borderColor = id ? "rgba(79,157,141,.6)" : "rgba(235,232,225,.14)";
+});
+
+window.addEventListener("resize", ()=>{ renderLegend(); });
+</script>
+</body>
+</html>

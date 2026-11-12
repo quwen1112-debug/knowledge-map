@@ -1,0 +1,31 @@
+# ---- 本地密钥 / 凭据（绝对不能提交）----
+*.key
+deepseek.key
+wb-credential.json
+.env
+.env.*
+models.json
+
+# ---- 网关运行时状态 ----
+gateway-tokens.json
+*.log
+.gw.log
+
+# ---- 个人数据 / 编辑器 ----
+.workbuddy/
+.codebuddy/
+.project/
+.vscode/
+.idea/
+*.local.json
+
+# ---- 依赖与产物（本项目零依赖，存在即异常）----
+node_modules/
+dist/
+build/
+
+# ---- 系统垃圾 ----
+.DS_Store
+Thumbs.db
+desktop.ini
+growth/
