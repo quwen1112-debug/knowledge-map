@@ -72,6 +72,76 @@
   .btn:active{transform:scale(.97)}
   .btn.danger:hover{border-color:rgba(201,111,111,.45);color:#e0a2a2}
   .btn.wide{width:100%;padding:9px}
+
+  /* ---------- 多画布：身份控件 + 切换器 ---------- */
+  .cv-wrap{position:relative;flex:none}
+  .cv-chip{
+    display:flex;align-items:center;gap:7px;height:32px;padding:0 10px;max-width:250px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:9px;
+    font-size:calc(12.5px * var(--fs));color:var(--ink-2);transition:.18s var(--ease);
+  }
+  .cv-chip:hover{border-color:rgba(235,232,225,.24);background:var(--panel-3);color:var(--ink)}
+  .cv-chip.open{border-color:rgba(217,135,72,.45);background:rgba(217,135,72,.09);color:var(--ink)}
+  .cv-chip .ico{width:12px;height:12px;flex:none;color:var(--accent);opacity:.92}
+  .cv-chip .nm{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:148px}
+  .cv-chip .n{font-size:calc(10.5px * var(--fs));color:var(--dim-2);font-variant-numeric:tabular-nums;flex:none}
+  .cv-chip .chev{width:9px;height:9px;flex:none;color:var(--dim-2);transition:transform .2s var(--ease)}
+  .cv-chip.open .chev{transform:rotate(180deg)}
+
+  .cv-pop{
+    position:absolute;top:calc(100% + 8px);left:0;width:340px;max-width:calc(100vw - 28px);z-index:60;
+    background:var(--panel-2);border:1px solid var(--line-2);border-radius:13px;padding:9px;
+    box-shadow:0 24px 60px rgba(0,0,0,.62);
+    opacity:0;transform:translateY(-6px) scale(.985);pointer-events:none;
+    transition:.18s var(--ease);transform-origin:top left;
+  }
+  .cv-pop.open{opacity:1;transform:none;pointer-events:auto}
+  .cv-srch{position:relative;margin-bottom:7px}
+  .cv-srch input{
+    width:100%;height:34px;background:var(--panel-3);border:1px solid transparent;border-radius:8px;
+    padding:0 10px 0 30px;color:var(--ink);font-size:calc(12px * var(--fs));font-family:inherit;outline:none;
+  }
+  .cv-srch input:focus{border-color:rgba(217,135,72,.4)}
+  .cv-srch input::placeholder{color:var(--dim-2)}
+  .cv-srch svg{position:absolute;left:10px;top:11px;width:12px;height:12px;color:var(--dim-2);pointer-events:none}
+  .cv-list{max-height:min(52vh,390px);overflow:auto;margin:0 -3px;padding:0 3px}
+  .cv-row{
+    display:flex;align-items:center;gap:8px;padding:8px 9px;border-radius:8px;cursor:pointer;
+    position:relative;border:1px solid transparent;transition:background .14s var(--ease);
+  }
+  .cv-row:hover{background:var(--panel-3)}
+  .cv-row.on{background:rgba(79,157,141,.1);border-color:rgba(79,157,141,.22)}
+  .cv-row.on::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:2px;border-radius:2px;background:var(--teal)}
+  .cv-row.sel{background:var(--panel-3);border-color:rgba(235,232,225,.18)}
+  .cv-row .bd{min-width:0;flex:1}
+  .cv-row .nm{font-size:calc(12.5px * var(--fs));font-weight:600;color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cv-row .mt{font-size:calc(10.5px * var(--fs));color:var(--dim-2);margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cv-row .tag{font-size:calc(9.5px * var(--fs));color:var(--teal);flex:none}
+  .cv-row .acts{display:none;gap:7px;flex:none}
+  .cv-row:hover .acts{display:flex}
+  .cv-row .acts button{background:transparent;border:none;padding:2px 1px;font-size:calc(10.5px * var(--fs));color:var(--dim)}
+  .cv-row .acts button:hover{color:var(--ink)}
+  .cv-row .acts button[data-act="del"]:hover{color:#e0a2a2}
+  .cv-edit{
+    width:100%;background:var(--panel-3);border:1px solid rgba(217,135,72,.5);border-radius:6px;
+    padding:3px 6px;color:var(--ink);font-size:calc(12.5px * var(--fs));font-family:inherit;outline:none;
+  }
+  .cv-foot{display:flex;align-items:center;justify-content:space-between;
+    margin-top:7px;padding:8px 9px 0;border-top:1px solid var(--line)}
+  .cv-foot button{background:transparent;border:none;padding:2px 0;font-size:calc(12px * var(--fs));
+    color:var(--accent);font-weight:600}
+  .cv-foot button:hover{color:#eda368}
+  .cv-foot span{font-size:calc(10px * var(--fs));color:var(--dim-2)}
+  .cv-empty{padding:24px 10px;text-align:center;font-size:calc(11.5px * var(--fs));color:var(--dim-2)}
+
+  .toast-btn{
+    margin-left:10px;background:rgba(217,135,72,.16);border:1px solid rgba(217,135,72,.42);
+    color:var(--accent);border-radius:7px;padding:3px 9px;font-size:calc(12px * var(--fs));
+    font-weight:600;pointer-events:auto;
+  }
+  .toast-btn:hover{background:rgba(217,135,72,.26)}
   .btn.primary{
     background:var(--accent);border-color:var(--accent);color:#15100b;font-weight:620;
   }
@@ -339,6 +409,35 @@
   }
   .modal-box .field input:focus{border-color:rgba(217,135,72,.45)}
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+  /* 新建画布：三个模式排成可选卡片。
+     默认的单选行会把说明挤到标签屁股后面，「空白画布从零开始」读起来像一个词。
+     选择器要压过上面的 .modal-box .field input / label，否则会被撑成一条输入框。 */
+  .modal-box .field .nc-opt{
+    display:grid;grid-template-columns:15px 1fr;column-gap:10px;row-gap:1px;
+    align-items:start;padding:9px 11px;margin:0 0 7px;cursor:pointer;
+    border:1px solid var(--line);border-radius:10px;
+    transition:border-color .16s,background .16s;
+  }
+  .modal-box .field .nc-opt:hover{border-color:var(--line-2)}
+  .modal-box .field .nc-opt input{
+    -webkit-appearance:none;appearance:none;
+    width:14px;height:14px;min-width:14px;margin:2px 0 0;padding:0;
+    border:1.5px solid var(--line-2);border-radius:50%;background:transparent;
+    cursor:pointer;position:relative;transition:border-color .16s;
+  }
+  .modal-box .field .nc-opt input:checked{border-color:var(--accent);background:transparent}
+  .modal-box .field .nc-opt input:checked::after{
+    content:"";position:absolute;inset:2.5px;border-radius:50%;background:var(--accent);
+  }
+  .modal-box .field .nc-opt b{
+    display:block;margin:0;font-size:calc(12.5px * var(--fs));font-weight:600;
+    color:var(--ink);letter-spacing:0;line-height:1.45;
+  }
+  .modal-box .field .nc-opt span{
+    grid-column:2;display:block;margin:0;font-size:calc(11.5px * var(--fs));
+    color:var(--dim-2);line-height:1.5;
+  }
+  .modal-box .field .nc-opt:has(input:checked){border-color:rgba(217,135,72,.42);background:var(--accent-soft)}
   .note{
     font-size:calc(12px * var(--fs));color:var(--dim);line-height:1.8;background:var(--panel-2);
     border:1px solid var(--line);border-radius:9px;padding:10px 11px;margin-bottom:16px;
@@ -440,9 +539,30 @@
       <div class="mark"></div>
       <div>
         <h1>知识拓扑</h1>
-        <p>问一个概念 · 它长出一片</p>
+        <p>先收进来 · 别打断</p>
       </div>
     </div>
+
+    <div class="cv-wrap">
+      <button class="cv-chip" id="cvChip" aria-haspopup="dialog" aria-expanded="false" title="切换画布（Ctrl / ⌘ + K）">
+        <svg class="ico" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><rect x=".6" y=".6" width="4.6" height="4.6" rx="1.2"/><rect x="6.8" y=".6" width="4.6" height="4.6" rx="1.2"/><rect x=".6" y="6.8" width="4.6" height="4.6" rx="1.2"/><rect x="6.8" y="6.8" width="4.6" height="4.6" rx="1.2"/></svg>
+        <span class="nm" id="cvName">我的拓扑</span>
+        <span class="n" id="cvN">0</span>
+        <svg class="chev" viewBox="0 0 9 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l3.5 3.5L8 1"/></svg>
+      </button>
+      <div class="cv-pop" id="cvPop" role="dialog" aria-label="切换画布">
+        <div class="cv-srch">
+          <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.3" aria-hidden="true"><circle cx="5" cy="5" r="3.8"/><path d="M8 8l2.8 2.8" stroke-linecap="round"/></svg>
+          <input id="cvSearch" placeholder="搜画布…" autocomplete="off" spellcheck="false" aria-label="搜索画布">
+        </div>
+        <div class="cv-list" id="cvList"></div>
+        <div class="cv-foot">
+          <button id="cvNew">＋ 新建画布</button>
+          <span>Ctrl K</span>
+        </div>
+      </div>
+    </div>
+
     <div class="stats" id="stats"></div>
     <div class="tools">
       <div class="fs-wrap">
@@ -841,32 +961,25 @@ function buildDict(){
 buildDict();
 
 /* ---------------- 2. 状态与持久化 ---------------- */
+/* 旧版单图（v1）。迁移后只读保留，不删 —— 万一迁移出错还能回滚。 */
 const LS_KEY = "knowledge.v1";
+const LS_NOTES_LEGACY = "knowledge.v1.notes";
+/* 多画布（v2）：清单 + 每个画布一份内容 */
+const LS_META = "knowledge.v2.meta";
+const LS_CANVAS = "knowledge.v2.cap.";
 const LS_CFG = "knowledge.cfg.v1";
 const START_IDS = ["port","tcp","udp","tcp-port","udp-port"];
 
 let S = {
   nodes: [],   // {id,name,cat,brief,points[],kw[],alias[],status,manual,x,y,vx,vy,appear}
   links: [],   // {s,t,rel}
+  notes: {},   // {nodeId: text} —— 跟着画布走，不跨画布串
   sel: null,
   hover: null,
   scale: 1, tx: 0, ty: 0,
+  scrollTop: 0,
   alpha: 0
 };
-
-function freshGraph(){
-  S.nodes = []; S.links = []; S.sel = null;
-  const seedNodes = START_IDS.map(id=>makeNode(DICT[id]));
-  seedNodes.forEach(n=>S.nodes.push(n));
-  const idSet = new Set(START_IDS);
-  START_IDS.forEach(id=>{
-    const c = DICT[id];
-    (c.links||[]).forEach(([t,rel])=>{
-      if(idSet.has(t)) addLinkRaw(id,t,rel);
-    });
-  });
-  layoutSeed();
-}
 
 function makeNode(c, extra){
   return {
@@ -879,13 +992,6 @@ function makeNode(c, extra){
     manual: !!(extra&&extra.manual),
     x: (Math.random()-.5)*420, y: (Math.random()-.5)*420, vx:0, vy:0, appear:0
   };
-}
-function layoutSeed(){
-  S.nodes.forEach((n,i)=>{
-    const a = (i/S.nodes.length)*Math.PI*2;
-    n.x = Math.cos(a)*170 + (Math.random()-.5)*60;
-    n.y = Math.sin(a)*170 + (Math.random()-.5)*60;
-  });
 }
 function addLinkRaw(s,t,rel){
   if(s===t) return false;
@@ -915,30 +1021,350 @@ function neighbors(id){
 }
 function degree(id){ return neighbors(id).length; }
 
-function save(){
-  try{
-    const data = {
-      v:1,
-      nodes:S.nodes.map(n=>({
-        id:n.id,name:n.name,cat:n.cat,brief:n.brief,points:n.points,
-        kw:n.kw,alias:n.alias,status:n.status,manual:n.manual,angles:n.angles
-      })),
-      links:S.links
-    };
-    localStorage.setItem(LS_KEY, JSON.stringify(data));
-  }catch(e){ /* 隐私模式等场景静默失败 */ }
+/* ---------------- 2.5 画布层（多画布） ----------------
+   一个学科一个画布，各自独立的图 / 笔记 / 视图。
+   切换 = 整份状态换掉，不是在同一份数据上做过滤。
+   存储：knowledge.v2.meta（清单）+ knowledge.v2.cap.<id>（内容）
+   边界：不做跨画布引用。概念只属于一个画布。
+--------------------------------------------------------- */
+let META = { v:2, migrated:false, activeId:null, canvases:[] };
+const COUNT_CACHE = new Map();     // canvasId -> 节点数（列表用，省得每次全读）
+
+function newCanvasId(){
+  return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 }
-function load(){
-  let raw = null;
-  try{ raw = localStorage.getItem(LS_KEY); }catch(e){}
-  if(!raw){ freshGraph(); return; }
+function activeCanvas(){
+  return META.canvases.find(c=>c.id===META.activeId) || null;
+}
+
+function readMeta(){
   try{
+    const raw = localStorage.getItem(LS_META);
+    if(!raw) return false;
+    const m = JSON.parse(raw);
+    if(!m || !Array.isArray(m.canvases)) return false;
+    const list = m.canvases.filter(c=>c && c.id && c.name).map(c=>({
+      id: c.id,
+      name: String(c.name).slice(0, 30),
+      createdAt: c.createdAt || Date.now(),
+      updatedAt: c.updatedAt || c.createdAt || Date.now()
+    }));
+    if(!list.length) return false;
+    META = { v:2, migrated: !!m.migrated, activeId: m.activeId || list[0].id, canvases: list };
+    if(!META.canvases.some(c=>c.id===META.activeId)) META.activeId = META.canvases[0].id;
+    return true;
+  }catch(e){ return false; }
+}
+function writeMeta(){
+  try{ localStorage.setItem(LS_META, JSON.stringify(META)); }catch(e){}
+}
+
+function readCanvasData(id){
+  try{
+    const raw = localStorage.getItem(LS_CANVAS + id);
+    if(!raw) return null;
     const d = JSON.parse(raw);
-    if(!d || !Array.isArray(d.nodes) || !d.nodes.length) throw 0;
-    S.nodes = d.nodes.map(n=>Object.assign({vx:0,vy:0,appear:1}, n));
-    S.links = (d.links||[]).filter(l=>l&&l.s&&l.t);
-    layoutSeed();
-  }catch(e){ freshGraph(); }
+    if(!d || !Array.isArray(d.nodes)) return null;
+    return d;
+  }catch(e){ return null; }
+}
+function writeCanvasData(id, d){
+  try{ localStorage.setItem(LS_CANVAS + id, JSON.stringify(d)); return true; }
+  catch(e){ return false; }     // 隐私模式 / 配额满：静默，不打断
+}
+function dropCanvasData(id){
+  try{ localStorage.removeItem(LS_CANVAS + id); }catch(e){}
+  COUNT_CACHE.delete(id);
+}
+
+/* 内置示例（新画布选「从模板开始」时用） */
+function seedData(){
+  const nodes = START_IDS.map(id=>{
+    const c = DICT[id];
+    const a = Math.random()*Math.PI*2, r = 120 + Math.random()*90;
+    return {
+      id:c.id, name:c.name, cat:c.cat||"待补充", brief:c.brief||"",
+      points:(c.points||[]).slice(), kw:(c.kw||[]).slice(), alias:(c.alias||[]).slice(),
+      status:"new", manual:false,
+      x:Math.cos(a)*r, y:Math.sin(a)*r
+    };
+  });
+  const set = new Set(START_IDS), links = [];
+  START_IDS.forEach(id=>{
+    (DICT[id].links||[]).forEach(([t,rel])=>{
+      if(!set.has(t)) return;
+      if(links.some(l=>(l.s===id&&l.t===t)||(l.s===t&&l.t===id))) return;
+      links.push({s:id, t, rel:rel||"相关"});
+    });
+  });
+  return { v:2, nodes, links, notes:{}, view:{scale:0, tx:0, ty:0, sel:null, scrollTop:0} };
+}
+
+/* 当前内存状态 → 可落盘的快照。坐标也要存，
+   否则切走再切回来布局会重算，位置全变 —— 那是不能接受的。 */
+function snapshot(){
+  // 面板滚到哪儿也是「我上次看到的位置」，落盘前顺手记一下。
+  // 所有 save / 切换 / 导出都过这里，一处收齐。
+  if(panel && panel.classList && panel.classList.contains("open")) capturePanelScroll();
+  return {
+    v:2,
+    nodes: S.nodes.map(n=>({
+      id:n.id, name:n.name, cat:n.cat, brief:n.brief, points:n.points,
+      kw:n.kw, alias:n.alias, status:n.status, manual:n.manual, angles:n.angles,
+      x: Math.round(n.x*10)/10, y: Math.round(n.y*10)/10
+    })),
+    links: S.links.map(l=>({s:l.s, t:l.t, rel:l.rel})),
+    notes: Object.assign({}, S.notes||{}),
+    view: { scale:S.scale, tx:S.tx, ty:S.ty, sel:S.sel, scrollTop:S.scrollTop||0 }
+  };
+}
+
+function save(){
+  if(!META.activeId) return;
+  writeCanvasData(META.activeId, snapshot());
+  COUNT_CACHE.set(META.activeId, S.nodes.length);
+  const c = activeCanvas();
+  if(c) c.updatedAt = Date.now();
+  writeMeta();
+}
+
+/* 把一份数据装进内存。返回 true 表示有节点缺坐标、需要重新布局一次 */
+function applyData(d){
+  S.nodes = (d.nodes||[]).map(n=>Object.assign({vx:0, vy:0, appear:1}, n));
+  S.links = (d.links||[]).filter(l=>l && l.s && l.t);
+  S.notes = (d.notes && typeof d.notes === "object") ? Object.assign({}, d.notes) : {};
+  const v = d.view || {};
+  S.scale = (typeof v.scale === "number" && isFinite(v.scale)) ? v.scale : 0;
+  S.tx = (typeof v.tx === "number" && isFinite(v.tx)) ? v.tx : 0;
+  S.ty = (typeof v.ty === "number" && isFinite(v.ty)) ? v.ty : 0;
+  S.sel = (v.sel && S.nodes.some(n=>n.id===v.sel)) ? v.sel : null;
+  S.scrollTop = v.scrollTop || 0;
+  S.hover = null;
+  S.alpha = 0;
+  camT = null;
+  dragging = false;
+
+  let missing = false;
+  S.nodes.forEach((n,i)=>{
+    if(typeof n.x !== "number" || !isFinite(n.x) || typeof n.y !== "number" || !isFinite(n.y)){
+      const a = (i/Math.max(1,S.nodes.length))*Math.PI*2;
+      n.x = Math.cos(a)*170 + (Math.random()-.5)*60;
+      n.y = Math.sin(a)*170 + (Math.random()-.5)*60;
+      missing = true;
+    }
+  });
+  return missing;
+}
+
+/* 启动：有 v2 清单就读当前画布；没有就先迁移 v1，再退到种子 */
+function bootCanvas(){
+  if(readMeta()){
+    const d = readCanvasData(META.activeId);
+    if(d) return applyData(d);
+    // 清单在、内容没了（被清过 / 写失败）：给这个画布补一份空的，别静默换掉别人
+    const blank = { v:2, nodes:[], links:[], notes:{}, view:{scale:0,tx:0,ty:0,sel:null,scrollTop:0} };
+    writeCanvasData(META.activeId, blank);
+    return applyData(blank);
+  }
+  return initFirstCanvas();
+}
+
+/* 第一次跑 v2：优先把 v1 那张图整份收编成第一个画布，一个点都不丢 */
+function initFirstCanvas(){
+  let d = null, migrated = false;
+  try{
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      const old = JSON.parse(raw);
+      if(old && Array.isArray(old.nodes) && old.nodes.length){
+        let notes = {};
+        try{
+          const n = JSON.parse(localStorage.getItem(LS_NOTES_LEGACY) || "{}");
+          if(n && typeof n === "object") notes = n;
+        }catch(e){}
+        d = {
+          v:2,
+          nodes: old.nodes,                                    // 原样搬，不改字段
+          links: (old.links||[]).filter(l=>l && l.s && l.t),
+          notes: notes,
+          view: { scale:0, tx:0, ty:0, sel:null, scrollTop:0 }
+        };
+        migrated = true;
+      }
+    }
+  }catch(e){ d = null; }
+
+  if(!d) d = seedData();
+  const id = newCanvasId();
+  META = {
+    v:2, migrated, activeId:id,
+    canvases:[{ id, name:"我的拓扑", createdAt:Date.now(), updatedAt:Date.now() }]
+  };
+  writeCanvasData(id, d);
+  writeMeta();
+  applyData(d);
+  // 迁移过来的旧图，坐标是用户自己摆过的 —— 跑一遍力导向就把位置全搅乱了，
+  // 那不是"整理"，那是把人的空间记忆抹掉。所以迁移一律不重排；
+  // 个别缺坐标的节点由 applyData 自己按环摆上去就够了。
+  // 只有真正新建（种子模板）才需要落一次位。
+  return !migrated;
+}
+
+/* 切换画布：存当前 → 换整份 → 恢复视图。切回来必须一模一样。 */
+function switchCanvas(id){
+  if(!id || id === META.activeId) return false;
+  if(!META.canvases.some(c=>c.id===id)) return false;
+
+  const target = readCanvasData(id);
+  if(!target){ toast("这个画布的数据读不出来了"); return false; }
+
+  if(META.activeId) writeCanvasData(META.activeId, snapshot());
+
+  if(raf){ cancelAnimationFrame(raf); raf = null; }
+  closePanel();          // 必须先关：closePanel 会清掉上一张的选中，晚了连新画布的选中也擦了
+  META.activeId = id;
+  writeMeta();
+
+  const missing = applyData(target);
+  renderAll();
+  if(missing) presettle(220);
+
+  if(!S.scale || !isFinite(S.scale)) fitView();
+  else draw();
+
+  if(S.sel) renderPanel();
+  restorePanelScroll();
+  renderChip();
+  return true;
+}
+
+function restorePanelScroll(){
+  const sc = document.getElementById("pScroll") || document.querySelector(".p-scroll");
+  if(sc) sc.scrollTop = S.scrollTop || 0;
+}
+
+/* 改名字：老名字不作别名（画布名是分类，不是概念），撞名直接拦。 */
+function renameCanvas(id, raw){
+  const c = META.canvases.find(x=>x.id===id);
+  if(!c) return { ok:false, why:"找不到这个画布" };
+  const name = String(raw||"").trim().replace(/\s+/g," ").slice(0,30);
+  if(!name) return { ok:false, why:"名字不能空" };
+  if(name === c.name) return { ok:true, noop:true };
+  const dup = META.canvases.some(x=>x.id!==id && x.name === name);
+  if(dup) return { ok:false, why:"已经有同名的画布了" };
+  c.name = name;
+  writeMeta();
+  renderChip();
+  return { ok:true };
+}
+
+/* 删除：内容先留在内存里 5 秒，能撤回。删的是画布，不是概念级别。 */
+let PENDING_DEL = null, pendingTimer = null;
+function deleteCanvas(id){
+  const i = META.canvases.findIndex(c=>c.id===id);
+  if(i < 0) return;
+  if(META.canvases.length === 1){
+    toast("最后一个画布不能删 —— 想清空内容用「重置」");
+    return;
+  }
+  const c = META.canvases[i];
+  const data = readCanvasData(id);
+  const wasActive = (META.activeId === id);
+
+  META.canvases.splice(i,1);
+  const nextId = wasActive ? (META.canvases[Math.min(i, META.canvases.length-1)]||{}).id : META.activeId;
+  writeMeta();
+  dropCanvasData(id);
+
+  PENDING_DEL = { id, name:c.name, data, createdAt:c.createdAt, index:i, wasActive, nextId };
+  clearTimeout(pendingTimer);
+  pendingTimer = setTimeout(()=>{ PENDING_DEL = null; }, 5200);
+
+  if(wasActive && nextId) switchCanvasTo(nextId);
+  renderList();
+  renderChip();
+  toastAction(`已删除「${esc(c.name)}」`, "撤销", undoDelete, 5200);
+}
+
+/* 删除后切走：switchCanvas 会因为 activeId 已经是目标而提前返回，这里单独处理 */
+function switchCanvasTo(id){
+  const target = readCanvasData(id);
+  closePanel();
+  META.activeId = id; writeMeta();
+  if(!target){
+    const blank = { v:2, nodes:[], links:[], notes:{}, view:{scale:0,tx:0,ty:0,sel:null,scrollTop:0} };
+    writeCanvasData(id, blank);
+    const miss = applyData(blank); renderAll(); if(miss) presettle(160); fitView();
+    return;
+  }
+  if(raf){ cancelAnimationFrame(raf); raf = null; }
+  const miss = applyData(target);
+  renderAll();
+  if(miss) presettle(220);
+  if(!S.scale || !isFinite(S.scale)) fitView(); else draw();
+  if(S.sel) renderPanel();
+  restorePanelScroll();
+}
+
+function undoDelete(){
+  const p = PENDING_DEL;
+  if(!p) return;
+  PENDING_DEL = null;
+  clearTimeout(pendingTimer);
+  META.canvases.splice(Math.min(p.index, META.canvases.length), 0,
+    { id:p.id, name:p.name, createdAt:p.createdAt, updatedAt:Date.now() });
+  if(p.data) writeCanvasData(p.id, p.data);
+  else { const blank = { v:2, nodes:[], links:[], notes:{}, view:{scale:0,tx:0,ty:0,sel:null,scrollTop:0} }; writeCanvasData(p.id, blank); }
+  writeMeta();
+  if(p.wasActive){
+    META.activeId = p.id; writeMeta();
+    switchCanvasTo(p.id);
+  }
+  renderList(); renderChip();
+  toast(`已恢复「${esc(p.name)}」`);
+}
+
+function createCanvas(name, mode){
+  const nm = String(name||"").trim().replace(/\s+/g," ").slice(0,30) || "新画布";
+  if(META.canvases.some(c=>c.name === nm)) return { ok:false, why:"已经有同名的画布了" };
+
+  let d;
+  if(mode === "copy"){
+    d = snapshot();
+    d.view = { scale:0, tx:0, ty:0, sel:null, scrollTop:0 };   // 视图另算，别把旧镜头带过去
+  } else if(mode === "template"){
+    d = seedData();
+  } else {
+    d = { v:2, nodes:[], links:[], notes:{}, view:{scale:0, tx:0, ty:0, sel:null, scrollTop:0} };
+  }
+
+  const id = newCanvasId();
+  // 先把当前画布存好，否则切走时内存里的改动会丢
+  if(META.activeId) writeCanvasData(META.activeId, snapshot());
+
+  META.canvases.push({ id, name:nm, createdAt:Date.now(), updatedAt:Date.now() });
+  META.activeId = id;
+  writeCanvasData(id, d);
+  writeMeta();
+
+  if(raf){ cancelAnimationFrame(raf); raf = null; }
+  closePanel();
+  const miss = applyData(d);
+  renderAll();
+  if(miss) presettle(200);
+  fitView();
+  renderChip();
+  return { ok:true, id };
+}
+
+function duplicateCanvas(){
+  const c = activeCanvas();
+  if(!c) return;
+  let base = c.name + " 副本", n = 2;
+  while(META.canvases.some(x=>x.name === base)) base = c.name + " 副本 " + (n++);
+  const r = createCanvas(base, "copy");
+  openList();
+  if(r.ok) toast(`已复制成 <b>${esc(base)}</b>`);
 }
 
 /* ---------------- 3. 图引擎 ---------------- */
@@ -2041,17 +2467,13 @@ function renameNode(N, raw){
 
 /* 笔记单独存，避免每次 save 都全量序列化 */
 function notesOf(id){
-  try{
-    const m = JSON.parse(localStorage.getItem(LS_KEY+".notes")||"{}");
-    return m[id] || "";
-  }catch(e){ return ""; }
+  return (S.notes && S.notes[id]) || "";
 }
 function setNote(id, text){
-  try{
-    const m = JSON.parse(localStorage.getItem(LS_KEY+".notes")||"{}");
-    if(text.trim()) m[id] = text; else delete m[id];
-    localStorage.setItem(LS_KEY+".notes", JSON.stringify(m));
-  }catch(e){}
+  if(!S.notes) S.notes = {};
+  const t = String(text == null ? "" : text);
+  if(t.trim()) S.notes[id] = t; else delete S.notes[id];
+  save();          // 笔记跟着画布一起存，切走不会串到别的画布
 }
 
 /* ---------------- 7. 提问流程 ---------------- */
@@ -2676,25 +3098,134 @@ async function fillAllPending(){
 }
 document.getElementById("btnFillAll").onclick = fillAllPending;
 
-/* ---------------- 11. 导入 / 导出 / 重置 ---------------- */
+/* ---------------- 11. 导入 / 导出 / 重置 ----------------
+
+   导出走「整包」：一个文件装下所有画布。
+   只导当前画布的话，你哪天换个浏览器，三个学科就只剩一个 —— 那不叫备份。
+
+   导入一律进「新画布」，绝不覆盖手上这张。
+   旧版 v1 的单图文件也认，笔记从节点的 note 字段搬进 notes 表。
+--------------------------------------------------------- */
+
+/* 任意一代的导出文件 → 当前能用的画布数据。认不出来就返回 null。 */
+function normalizeImport(d){
+  if(!d || typeof d !== "object" || !Array.isArray(d.nodes)) return null;
+
+  const notes = {};
+  if(d.notes && typeof d.notes === "object"){
+    Object.keys(d.notes).forEach(k=>{
+      const t = String(d.notes[k] == null ? "" : d.notes[k]);
+      if(t.trim()) notes[k] = t;
+    });
+  }
+
+  const nodes = [], seenId = new Set();
+  d.nodes.forEach(x=>{
+    if(!x || !x.id || !x.name) return;
+    const id = String(x.id);
+    if(seenId.has(id)) return;
+    seenId.add(id);
+    const n = {
+      id,
+      name: String(x.name).slice(0, 80),
+      cat: x.cat || "待补充",
+      brief: x.brief || "",
+      points: Array.isArray(x.points) ? x.points.slice() : [],
+      kw: Array.isArray(x.kw) ? x.kw.slice() : [],
+      alias: Array.isArray(x.alias) ? x.alias.slice() : [],
+      status: x.status || "new",
+      manual: !!x.manual
+    };
+    if(x.angles) n.angles = x.angles;
+    if(typeof x.x === "number" && isFinite(x.x) && typeof x.y === "number" && isFinite(x.y)){
+      n.x = x.x; n.y = x.y;                      // 有坐标就照搬，别重排
+    }
+    // v1 时代笔记是挂在节点上的
+    if(x.note && String(x.note).trim() && !notes[id]) notes[id] = String(x.note);
+    nodes.push(n);
+  });
+
+  const links = [], seen = new Set();
+  (d.links||[]).forEach(l=>{
+    if(!l || !l.s || !l.t || l.s === l.t) return;
+    if(!seenId.has(String(l.s)) || !seenId.has(String(l.t))) return;   // 端点不在，边就没意义
+    const k = l.s + "\u0000" + l.t, rk = l.t + "\u0000" + l.s;
+    if(seen.has(k) || seen.has(rk)) return;
+    seen.add(k);
+    links.push({ s:String(l.s), t:String(l.t), rel: l.rel || "相关" });
+  });
+
+  return { nodes, links, notes };
+}
+
+/* 一批画布数据 → 落地成新画布，并切到第一个导进来的 */
+function importCanvases(baseName, list){
+  // 当前画布先落盘，否则切走就丢了
+  if(META.activeId) writeCanvasData(META.activeId, snapshot());
+
+  const made = [];
+  list.forEach((raw, i)=>{
+    const clean = normalizeImport(raw);
+    if(!clean) return;
+    let want = String((raw && raw.name) || "").trim().slice(0, 30);
+    if(!want) want = list.length > 1 ? baseName + " " + (i+1) : baseName;
+    let nm = want, k = 2;
+    while(META.canvases.some(c=>c.name === nm)) nm = want + " " + (k++);
+
+    const id = newCanvasId();
+    writeCanvasData(id, {
+      v:2, nodes:clean.nodes, links:clean.links, notes:clean.notes,
+      view:{ scale:0, tx:0, ty:0, sel:null, scrollTop:0 }
+    });
+    META.canvases.push({ id, name:nm, createdAt:Date.now(), updatedAt:Date.now() });
+    COUNT_CACHE.set(id, clean.nodes.length);
+    made.push({ id, name:nm, count:clean.nodes.length });
+  });
+
+  if(!made.length) return { caps:0, nodes:0 };
+
+  META.activeId = made[0].id;
+  writeMeta();
+  if(raf){ cancelAnimationFrame(raf); raf = null; }
+  closePanel();
+  const d = readCanvasData(made[0].id);
+  const miss = d ? applyData(d) : false;
+  renderAll();
+  if(miss) presettle(220);
+  if(!S.scale || !isFinite(S.scale)) fitView(); else draw();
+  renderChip(); renderList();
+  return { caps: made.length, nodes: made.reduce((a,b)=>a+b.count, 0) };
+}
+
 document.getElementById("btnExport").onclick = ()=>{
+  save();     // 当前画布先落盘，下面才读得到最新的
+  const caps = META.canvases.map(c=>{
+    const d = (c.id === META.activeId) ? snapshot() : readCanvasData(c.id);
+    return {
+      name: c.name,
+      createdAt: c.createdAt,
+      nodes: (d && d.nodes) || [],
+      links: (d && d.links) || [],
+      notes: (d && d.notes) || {},
+      view: (d && d.view) || { scale:0, tx:0, ty:0, sel:null, scrollTop:0 }
+    };
+  });
+  const act = activeCanvas();
   const data = {
-    v:1,
+    v: 2,
+    kind: "knowledge-topology",
     exportedAt: new Date().toISOString(),
-    nodes: S.nodes.map(n=>({
-      id:n.id,name:n.name,cat:n.cat,brief:n.brief,points:n.points,
-      kw:n.kw,alias:n.alias,status:n.status,manual:n.manual,note:notesOf(n.id),
-      angles:n.angles
-    })),
-    links:S.links
+    active: act ? act.name : null,
+    canvases: caps
   };
   const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
   const a = document.createElement("a");
+  const total = caps.reduce((n,c)=>n + c.nodes.length, 0);
   a.href = URL.createObjectURL(blob);
   a.download = "knowledge-topology-" + new Date().toISOString().slice(0,10) + ".json";
   a.click();
-  URL.revokeObjectURL(a.href);
-  toast("已导出 JSON");
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+  toast(`已导出 <b>${caps.length}</b> 个画布 · ${total} 个概念`);
 };
 
 document.getElementById("btnImport").onclick = ()=>{
@@ -2704,38 +3235,56 @@ document.getElementById("btnImport").onclick = ()=>{
     const f = inp.files[0]; if(!f) return;
     const fr = new FileReader();
     fr.onload = ()=>{
-      try{
-        const d = JSON.parse(fr.result);
-        if(!d.nodes || !Array.isArray(d.nodes)) throw 0;
-        S.nodes = d.nodes.map(n=>Object.assign({vx:0,vy:0,appear:1}, n));
-        S.links = (d.links||[]).filter(l=>l&&l.s&&l.t);
-        S.sel = null;
-        layoutSeed();
-        presettle(220); save(); renderAll(); closePanel(); fitView();
-        toast("已导入 " + S.nodes.length + " 个概念");
-      }catch(e){ toast("文件格式不对，导入失败"); }
+      let d;
+      try{ d = JSON.parse(fr.result); }
+      catch(e){ toast("这不是一个 JSON 文件"); return; }
+
+      // 整包（canvases[]）、单张画布、旧版单图 —— 三种都吃
+      const list = Array.isArray(d && d.canvases) ? d.canvases
+                 : (d && Array.isArray(d.nodes)) ? [d] : [];
+      if(!list.length){ toast("文件里没找到 nodes 或 canvases"); return; }
+
+      const base = String(f.name || "导入").replace(/\.json$/i, "").trim().slice(0,24) || "导入";
+      const r = importCanvases(base, list);
+      if(!r.caps){ toast("这个文件里没有可用的节点"); return; }
+      toast(r.caps > 1
+        ? `导入了 <b>${r.caps}</b> 个画布 · 共 ${r.nodes} 个概念`
+        : `已导入成新画布 · ${r.nodes} 个概念`);
+      openList();
     };
     fr.readAsText(f);
   };
   inp.click();
 };
 
+/* 重置只动当前这张画布。别的学科凭什么陪葬。 */
 document.getElementById("btnReset").onclick = ()=>{
+  const c = activeCanvas();
+  const nm = c ? c.name : "当前画布";
   openModal(`
-    <h3>重置拓扑</h3>
-    <p class="sub">会清掉全部节点、连线和笔记，回到内置示例。导出过的 JSON 可以再导回来。</p>
+    <h3>重置「${esc(nm)}」</h3>
+    <p class="sub">只清空这一张画布，其他画布不受影响。清掉的东西找不回来 —— 不放心就先导出一份。</p>
     <div class="modal-actions">
       <button class="btn" id="mCancel">算了</button>
-      <button class="btn primary" id="mOk">确认重置</button>
+      <button class="btn" id="mEmpty">清空</button>
+      <button class="btn primary" id="mSeed">回到示例</button>
     </div>`);
-  modalBox.querySelector("#mCancel").onclick = closeModal;
-  modalBox.querySelector("#mOk").onclick = ()=>{
-    try{ localStorage.removeItem(LS_KEY); localStorage.removeItem(LS_KEY+".notes"); }catch(e){}
-    freshGraph(); presettle(240); renderAll(); closePanel();
-    S.scale = 1; S.tx = W/2; S.ty = H/2;
+  const wipe = (payload, msg)=>{
+    if(!META.activeId) return;
+    applyData(payload);
+    writeCanvasData(META.activeId, payload);
+    COUNT_CACHE.set(META.activeId, payload.nodes.length);
+    const ac = activeCanvas(); if(ac) ac.updatedAt = Date.now();
+    writeMeta();
+    presettle(240); renderAll(); closePanel(); renderChip();
     fitView();
-    closeModal(); toast("已重置");
+    closeModal(); toast(msg);
   };
+  modalBox.querySelector("#mCancel").onclick = closeModal;
+  modalBox.querySelector("#mEmpty").onclick = ()=>
+    wipe({ v:2, nodes:[], links:[], notes:{}, view:{scale:0,tx:0,ty:0,sel:null,scrollTop:0} }, "已清空这张画布");
+  modalBox.querySelector("#mSeed").onclick = ()=>
+    wipe(seedData(), "已回到示例");
 };
 
 /* ---------------- 12. 文本抽词 ---------------- */
@@ -2819,34 +3368,291 @@ function presettle(iters){
   S.nodes.forEach(n=>{ n.vx = 0; n.vy = 0; n.appear = 1; });
 }
 
+/* ---------------- 11.5 画布界面：身份控件 / 切换器 / 新建管理 ---------------- */
+const cvChip  = document.getElementById("cvChip");
+const cvPop   = document.getElementById("cvPop");
+const cvName  = document.getElementById("cvName");
+const cvN     = document.getElementById("cvN");
+const cvList  = document.getElementById("cvList");
+const cvSearch= document.getElementById("cvSearch");
+const cvNew   = document.getElementById("cvNew");
+const cvWrap  = cvChip ? cvChip.parentElement : null;
+let POP_SEL = 0;
+
+function renderChip(){
+  const c = activeCanvas();
+  if(cvName) cvName.textContent = c ? c.name : "未命名";
+  if(cvN) cvN.textContent = String(S.nodes.length);
+  if(cvChip) cvChip.title = (c ? c.name : "") + " · 切换画布（Ctrl / ⌘ + K）";
+}
+
+function capturePanelScroll(){
+  const sc = panel && panel.querySelector ? panel.querySelector(".p-scroll") : null;
+  if(sc) S.scrollTop = sc.scrollTop;
+}
+function restorePanelScroll(){
+  const sc = panel && panel.querySelector ? panel.querySelector(".p-scroll") : null;
+  if(sc) sc.scrollTop = S.scrollTop || 0;
+}
+
+function countOf(id){
+  if(id === META.activeId) return S.nodes.length;
+  if(COUNT_CACHE.has(id)) return COUNT_CACHE.get(id);
+  const d = readCanvasData(id);
+  const n = d && Array.isArray(d.nodes) ? d.nodes.length : 0;
+  COUNT_CACHE.set(id, n);
+  return n;
+}
+
+function ago(ts){
+  const t = Number(ts) || 0;
+  if(!t) return "";
+  const d = Date.now() - t;
+  if(d < 60000) return "刚刚";
+  if(d < 3600000) return Math.floor(d/60000) + " 分钟前";
+  if(d < 86400000) return Math.floor(d/3600000) + " 小时前";
+  if(d < 172800000) return "昨天";
+  if(d < 604800000) return Math.floor(d/86400000) + " 天前";
+  const dt = new Date(t);
+  return (dt.getMonth()+1) + " 月 " + dt.getDate() + " 日";
+}
+
+function renderList(){
+  if(!cvList) return;
+  const q = (cvSearch && cvSearch.value || "").trim().toLowerCase();
+  const items = META.canvases.filter(c=> !q || c.name.toLowerCase().includes(q));
+
+  if(!items.length){
+    cvList.innerHTML = '<div class="cv-empty">没有匹配的画布</div>';
+    POP_SEL = 0;
+    return;
+  }
+  if(POP_SEL >= items.length) POP_SEL = items.length - 1;
+
+  cvList.innerHTML = items.map((c,i)=>{
+    const on = c.id === META.activeId;
+    return '<div class="cv-row' + (on ? " on" : "") + (i === POP_SEL ? " sel" : "") +
+      '" data-id="' + esc(c.id) + '" role="option" aria-selected="' + on + '">' +
+      '<div class="bd"><div class="nm">' + esc(c.name) + '</div>' +
+      '<div class="mt">' + countOf(c.id) + ' 个概念 · ' + esc(ago(c.updatedAt)) + '</div></div>' +
+      (on ? '<span class="tag">当前</span>' : "") +
+      '<div class="acts">' +
+        '<button type="button" data-act="rename" data-id="' + esc(c.id) + '">改名</button>' +
+        '<button type="button" data-act="del" data-id="' + esc(c.id) + '">删除</button>' +
+      '</div></div>';
+  }).join("");
+}
+
+function openList(){
+  if(!cvPop) return;
+  if(cvSearch) cvSearch.value = "";
+  POP_SEL = Math.max(0, META.canvases.findIndex(c=>c.id === META.activeId));
+  renderList();
+  cvPop.classList.add("open");
+  cvChip.classList.add("open");
+  cvChip.setAttribute("aria-expanded","true");
+  setTimeout(()=>{ try{ cvSearch && cvSearch.focus(); }catch(e){} }, 20);
+}
+function closeList(){
+  if(!cvPop) return;
+  cvPop.classList.remove("open");
+  cvChip.classList.remove("open");
+  cvChip.setAttribute("aria-expanded","false");
+}
+function toggleList(){
+  if(!cvPop) return;
+  cvPop.classList.contains("open") ? closeList() : openList();
+}
+function moveSel(d){
+  const rows = [].slice.call(cvList.querySelectorAll(".cv-row"));
+  if(!rows.length) return;
+  POP_SEL = (POP_SEL + d + rows.length) % rows.length;
+  rows.forEach((r,i)=> r.classList.toggle("sel", i === POP_SEL));
+  if(rows[POP_SEL] && rows[POP_SEL].scrollIntoView) rows[POP_SEL].scrollIntoView({block:"nearest"});
+}
+
+function startRename(id){
+  const rows = [].slice.call(cvList.querySelectorAll(".cv-row"));
+  const row = rows.filter(r=> r.getAttribute("data-id") === id)[0];
+  if(!row) return;
+  const bd = row.querySelector(".bd");
+  const cur = (META.canvases.filter(c=>c.id === id)[0] || {}).name || "";
+  if(!bd) return;
+  bd.innerHTML = '<input class="cv-edit" id="cvEditInput" maxlength="30" value="' + esc(cur) + '">';
+  const inp = row.querySelector("#cvEditInput");
+  if(!inp) return;
+  inp.focus(); inp.select();
+  inp.onkeydown = ev=>{
+    ev.stopPropagation();
+    if(ev.key === "Enter"){
+      ev.preventDefault();
+      const r = renameCanvas(id, inp.value);
+      if(!r.ok){ toast(esc(r.why)); return; }
+      renderList();
+      if(!r.noop) toast("已改名");
+    } else if(ev.key === "Escape"){
+      ev.preventDefault();
+      renderList();
+    }
+  };
+  inp.onblur = ()=> renderList();   // 只有回车才算保存，点走就是取消
+}
+
+function confirmDeleteCanvas(id){
+  const c = META.canvases.filter(x=>x.id === id)[0];
+  if(!c) return;
+  openModal(
+    '<h3>删除画布「' + esc(c.name) + '」？</h3>' +
+    '<p class="sub">里面的 ' + countOf(id) + ' 个概念、笔记和讲解记录会一起删掉。<br>删完 5 秒内还能撤销。</p>' +
+    '<div class="modal-actions"><button class="btn" id="cdNo">算了</button>' +
+    '<button class="btn" id="cdYes" style="background:rgba(201,111,111,.16);border-color:rgba(201,111,111,.5);color:#e8b3b1">删除</button></div>');
+  modalBox.querySelector("#cdNo").onclick = closeModal;
+  modalBox.querySelector("#cdYes").onclick = ()=>{ closeModal(); deleteCanvas(id); };
+}
+
+function newCanvasDialog(){
+  openModal(
+    '<h3>新建画布</h3>' +
+    '<p class="sub">一个学科一张图。名字就是你的分类，以后切换靠它认路。</p>' +
+    '<div class="field"><label>名字</label>' +
+    '<input class="edit-field" id="ncName" maxlength="30" placeholder="比如：数据结构" autocomplete="off" spellcheck="false"></div>' +
+    '<div class="field"><label>内容</label>' +
+    '<label class="nc-opt"><input type="radio" name="ncMode" value="blank" checked><b>空白画布</b><span>从零开始</span></label>' +
+    '<label class="nc-opt"><input type="radio" name="ncMode" value="copy"><b>从当前画布复制</b><span>带着 ' + S.nodes.length + ' 个概念过去</span></label>' +
+    '<label class="nc-opt"><input type="radio" name="ncMode" value="template"><b>从模板开始</b><span>计算机基础示例</span></label>' +
+    '</div>' +
+    '<div class="modal-actions"><button class="btn" id="ncCancel">取消</button>' +
+    '<button class="btn primary" id="ncOk">新建</button></div>');
+  const inp = modalBox.querySelector("#ncName");
+  const go = ()=>{
+    const picked = modalBox.querySelector('input[name="ncMode"]:checked');
+    const r = createCanvas(inp.value, picked ? picked.value : "blank");
+    if(!r.ok){ toast(esc(r.why)); inp.focus(); return; }
+    closeModal(); closeList();
+    toast("已新建「" + esc((activeCanvas()||{}).name || "") + "」");
+  };
+  inp.focus();
+  inp.onkeydown = e=>{ if(e.key === "Enter"){ e.preventDefault(); go(); } };
+  modalBox.querySelector("#ncCancel").onclick = closeModal;
+  modalBox.querySelector("#ncOk").onclick = go;
+}
+
+function toastAction(html, label, fn, ms){
+  const t = document.getElementById("toast");
+  if(!t) return;
+  t.innerHTML = html + '<button class="toast-btn" type="button">' + esc(label) + '</button>';
+  t.classList.add("show");
+  const b = t.querySelector(".toast-btn");
+  if(b) b.onclick = ()=>{
+    t.classList.remove("show");
+    clearTimeout(toastTimer);
+    clearTimeout(pendingTimer);
+    fn();
+  };
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), ms || 5200);
+}
+
+if(cvChip){
+  cvChip.onclick = e=>{ e.stopPropagation(); toggleList(); };
+  cvNew.onclick = e=>{ e.stopPropagation(); newCanvasDialog(); };
+  cvSearch.addEventListener("input", ()=>{ POP_SEL = 0; renderList(); });
+  cvList.addEventListener("click", e=>{
+    const btn = e.target.closest("button[data-act]");
+    if(btn){
+      e.stopPropagation();
+      const id = btn.getAttribute("data-id");
+      if(btn.getAttribute("data-act") === "rename") startRename(id);
+      else confirmDeleteCanvas(id);
+      return;
+    }
+    const row = e.target.closest(".cv-row");
+    if(!row) return;
+    const id = row.getAttribute("data-id");
+    if(id === META.activeId){ closeList(); return; }
+    if(switchCanvas(id)) { renderList(); closeList(); }
+  });
+  document.addEventListener("mousedown", e=>{
+    if(!cvPop.classList.contains("open")) return;
+    if(cvWrap && cvWrap.contains(e.target)) return;
+    closeList();
+  });
+}
+
+/* 键盘：只做能可靠拦下的组合键。
+   Ctrl/⌘+K 开合；Alt+1..9 直跳。
+   刻意不做 Ctrl+N / Ctrl+1..9 —— 那是浏览器自己占着的，硬做只会变成
+   "按了没反应"或者顺手开了新窗口，比没有快捷键更糟。 */
+document.addEventListener("keydown", e=>{
+  const mod = e.ctrlKey || e.metaKey;
+
+  if(mod && !e.shiftKey && !e.altKey && (e.key === "k" || e.key === "K")){
+    e.preventDefault();
+    toggleList();
+    return;
+  }
+  if(e.altKey && !mod && /^[1-9]$/.test(e.key)){
+    const c = META.canvases[Number(e.key) - 1];
+    if(c){
+      e.preventDefault();
+      closeList();
+      if(c.id !== META.activeId) switchCanvas(c.id);
+    }
+    return;
+  }
+  if(!cvPop || !cvPop.classList.contains("open")) return;
+  if(e.target && e.target.id === "cvEditInput") return;
+
+  if(e.key === "Escape"){ e.preventDefault(); closeList(); return; }
+  if(e.key === "ArrowDown"){ e.preventDefault(); moveSel(1); return; }
+  if(e.key === "ArrowUp"){ e.preventDefault(); moveSel(-1); return; }
+  if(e.key === "Enter"){
+    const rows = [].slice.call(cvList.querySelectorAll(".cv-row"));
+    const r = rows[POP_SEL];
+    if(r){
+      e.preventDefault();
+      const id = r.getAttribute("data-id");
+      closeList();
+      if(id !== META.activeId) switchCanvas(id);
+    }
+  }
+});
+
 function boot(){
   // 网关注入的令牌必须最先落地，否则首次 renderPanel 时 hasKey() 还是 false，
   // 面板会误显示"先接入模型"的提示。
   const injected = applyInjected();
   loadFs();
-  load();
-  presettle(260);
+  const needSettle = bootCanvas();      // 读 v2 画布；没有就先迁移 v1
+  if(needSettle) presettle(260);
   renderAll();
   resize();
+  renderChip();
 
-  // 首次打开：直接展示"TCP 端口"这张卡，让人三秒看懂这工具干什么
+  // 只在"还没选中任何节点"时给一张默认卡，让人三秒看懂这工具干什么；
+  // 上次停在哪儿就回哪儿，不要每次刷新都跳回 TCP 端口。
   const first = nodeById("tcp-port") ? "tcp-port" : (S.nodes[0] && S.nodes[0].id);
-  if(first && window.innerWidth > 900){
-    S.sel = first;
+  if(!S.sel && first && window.innerWidth > 900) S.sel = first;
+
+  if(S.sel && nodeById(S.sel) && window.innerWidth > 900){
     document.body.classList.add("noanim");
     panel.classList.add("open");
     document.body.classList.add("panel-open");
     renderPanel();
+    restorePanelScroll();
     requestAnimationFrame(()=> document.body.classList.remove("noanim"));
   }
-  // 初始视野直接算出来
+
   if(injected) toast("已接入本机网关 · <b>" + esc(WB_INJ.model) + "</b>，令牌只在这个页面里有效");
   syncAiBadge();
   if(!hasKey()) probeGateway().then(syncBannerGateway);   // 没接上就问一句网关在不在，把出路指出来
-  fitView();
+
+  // 有存档视野就照原样还原，没有才自动取景
+  if(!S.scale || !isFinite(S.scale)) fitView();
+  else draw();
 }
 
-/* 自动生成初始边（首次构建时 START_IDS 之间的边已在 freshGraph 处理） */
+/* 自动生成初始边（首次构建时 START_IDS 之间的边已在 seedData 处理） */
 boot();
 
 /* 输入时轻微过滤提示：命中已有节点则提示可直达 */
