@@ -1638,7 +1638,7 @@ async function askAngle(N, angle, strict){
     temperature: strict ? 0 : 0.5,
     response_format: {type:"json_object"},
     messages: [
-      {role:"system", content: SYS_DOMAIN +
+      {role:"system", content: SYS_DOMAIN + SYS_NAMING +
         "你是能把抽象技术概念讲到人真懂的人。只输出 JSON，不要 markdown 代码块，不要任何多余文字。"},
       {role:"user", content:
         `概念：${N.name}${(N.alias||[]).length ? "（又叫 " + N.alias.slice(0,3).join(" / ") + "）" : ""}\n`+
@@ -1646,7 +1646,8 @@ async function askAngle(N, angle, strict){
         `现在换个角度重新讲这个概念。角度要求：${angle.ask}\n\n`+
         `输出 JSON：{"paras":["2到4段，每段80到140字，写成人话，不要项目符号、不要小标题"],`+
         `"takeaway":"一句话，30字内，读完能记住的那种",`+
-        `"terms":["这次讲解里真正出现的专有名词，4到8个；一律给中文名，英文原名用括号附在后面，例如 四元组（4-tuple）"]}` +
+        `"terms":["这次讲解里真正出现的专有名词，4到8个；缩写直接写缩写（IP、TCP、DNS），`+
+        `有通行中文词的写成 中文（english），例如 四元组（4-tuple）"]}` +
         (strict ? "\n\n重要：必须是严格合法的 JSON。字符串内部不允许出现未经转义的英文双引号（引用术语请用「」），不要尾逗号。" : "")}
     ]
   });
@@ -1967,6 +1968,10 @@ function renderEdit(N){
       </div>
       <h2>${esc(N.name)}</h2>
       <div class="field" style="margin-top:16px">
+        <label>名字（图上显示的就是这个，模型起错了名字直接在这改）</label>
+        <input class="edit-field" id="eName" value="${esc(N.name)}">
+      </div>
+      <div class="field">
         <label>一句话定义</label>
         <textarea class="edit-field" id="eBrief" rows="3">${esc(N.brief)}</textarea>
       </div>
@@ -1992,14 +1997,46 @@ function renderEdit(N){
   panel.querySelector("#pClose").onclick = closePanel;
   panel.querySelector("#eCancel").onclick = ()=> renderPanel();
   panel.querySelector("#eSave").onclick = ()=>{
+    const newName = panel.querySelector("#eName").value;
     N.brief = panel.querySelector("#eBrief").value.trim();
     N.points = panel.querySelector("#ePoints").value.split("\n").map(s=>s.trim()).filter(Boolean);
     N.kw = panel.querySelector("#eKw").value.split(/[,，、]/).map(s=>s.trim()).filter(Boolean);
     N.cat = panel.querySelector("#eCat").value;
     if(!N.brief) N.brief = "（待补充）";
+    const rn = renameNode(N, newName);   // "renamed" / "merged" / "noop"
+    if(rn !== "noop"){
+      renderStats();
+      if(rn === "renamed") toast(`已改名为 <b>${esc(N.name)}</b>`);
+      return;
+    }
     save(); renderPanel(); renderStats();
     toast("已保存");
   };
+}
+
+/* 改名：老名字自动留作别名，以后搜老名字也能找到；
+   如果新名字图上已经有了，直接并过去，不留两个同义节点。
+   返回 "renamed" 改成了 / "merged" 被并走了 / "noop" 名字没动 */
+function renameNode(N, raw){
+  const to = String(raw || "").trim().replace(/\s+/g, " ").slice(0, 24);
+  if(!to || to === N.name) return "noop";
+  const old = N.name;
+
+  const twin = findNodeByName(to);
+  if(twin && twin.id !== N.id){
+    mergeNodes(twin.id, N.id);
+    if(S.sel === N.id) S.sel = twin.id;
+    save(); renderAll(); reheat(.5); renderPanel();
+    toast(`图上已有 <b>${esc(twin.name)}</b>，已经并进去了`);
+    return "merged";
+  }
+
+  N.name = to;
+  N.alias = Array.from(new Set([...(N.alias || []), old].filter(a=> a && norm(a) !== norm(to))));
+  NAME_IDX[norm(to)] = N.id;        // 新名字立刻可搜
+  NAME_IDX[norm(old)] = N.id;       // 老名字降级成别名，依然命中
+  save(); renderAll(); reheat(.35);
+  return "renamed";
 }
 
 /* 笔记单独存，避免每次 save 都全量序列化 */
@@ -2445,7 +2482,19 @@ const SYS_DOMAIN =
   "current 是「当前的」不是电流；token 是「令牌/词元」不是代币；port 是「端口」不是港口；" +
   "kernel 是「内核」不是果仁；thread 是「线程」不是线；cache 是「缓存」不是藏东西。" +
   "若某个词在计算机语境里确实没有意义，就在 brief 里直接说明它更可能是别的领域术语。";
-const SYS_SCOPE = SYS_DOMAIN + "只输出 JSON，不要 markdown 代码块，不要任何多余文字。";
+
+/* 命名口径：写用户真正会看到的那几个字，按工程师的口头习惯，不按词典直译 */
+const SYS_NAMING =
+  "命名口径（直接决定用户在图上看到什么字，务必照做）：" +
+  "一律使用工程师平时口头真正会说的那个词，不要用词典或官方文件里的直译。" +
+  "① 行业缩写原样保留，绝不翻译成中文全称——IP 就是 IP，不是「国际协议」；" +
+  "TCP、UDP、HTTP、DNS、CDN、API、SDK、JWT、CORS、SSH、TLS、SSL、URL、URI、GPU、CPU、" +
+  "RAM、SQL、JSON、YAML、NAT、VPN、DHCP、UUID 全都同理，写成缩写本身。" +
+  "② 有真正通行中文叫法的普通词，用中文做主名、英文放括号：线程（thread）、缓存（cache）、" +
+  "内核（kernel）、死锁（deadlock）、端口（port）。" +
+  "③ 自检标准：如果你不会在跟同事说话时把这个中文词说出口，就不要把它当主名，直接用英文原词。" +
+  "宁可保留英文，也不要造一个中国人不说的中文名。";
+const SYS_SCOPE = SYS_DOMAIN + SYS_NAMING + "只输出 JSON，不要 markdown 代码块，不要任何多余文字。";
 
 /* 把图上已有的概念名报给模型，帮它判断语境与用词 */
 function contextHint(){
@@ -2454,9 +2503,28 @@ function contextHint(){
   return "当前图谱里已有的概念（用来判断语境与用词）：" + names.join("、") + "。";
 }
 
+/* 用户输入是不是行业缩写？—— 是的话就别让模型给它起中文名。
+   判断：全大写短串（IP / TCP / HTTP）、或常见小写缩写（api / ssh / k8s）。 */
+const ABBREV_LOWER = new Set([
+  "ip","tcp","udp","http","https","dns","dhcp","url","uri","uuid","api","sdk","jwt","cors",
+  "csrf","xss","sql","json","yaml","xml","html","css","tls","ssl","ssh","ftp","smtp","imap",
+  "nat","vpn","cdn","gpu","cpu","ram","ssd","hdd","vm","k8s","npm","pip","cli","gui","ide",
+  "orm","mvc","rest","grpc","rpc","acl","rbac","jvm","gc","tty","dma","irq","bios","uefi",
+  "raid","lru","ttl","pid","uid","gid","mac","nic","lan","wan","mtu","io","os","db","cdn"
+]);
+function looksAbbrev(s){
+  const t = String(s||"").trim();
+  if(!/^[A-Za-z][A-Za-z0-9._\-]{0,11}$/.test(t)) return false;
+  const core = t.replace(/[^A-Za-z]/g, "");
+  if(core.length < 2) return false;
+  if(core === core.toUpperCase()) return true;      // IP / TCP / HTTP / DNS
+  return ABBREV_LOWER.has(t.toLowerCase());         // api / ssh / k8s
+}
+
 async function aiExplain(name){
   const cfg = getCfg();
   if(!cfg.key || !cfg.base) return null;
+  const abbr = looksAbbrev(name);
   const j = await postChat({
     model: cfg.model || "deepseek-flash",
     temperature: 0.3,
@@ -2465,18 +2533,25 @@ async function aiExplain(name){
       {role:"system", content: SYS_SCOPE},
       {role:"user", content:
         `解释概念「${name}」。${contextHint()}\n\n`+
+        (abbr
+          ? `注意：「${name}」是行业缩写，name 字段必须原样返回「${name}」本身，`+
+            `绝对不要翻译成中文全称；中文全称放进 alias 里。\n\n`
+          : "")+
         `输出 JSON：`+
-        `{"name":"规范中文名；没有通行中文译名就保留用户输入的原词",`+
-        `"alias":["用户输入的原词","英文原名","常见缩写"],`+
+        `{"name":${abbr
+            ? `"必须是「${name}」本身，不许翻译"`
+            : `"通行叫法：有真正常用的中文词就用中文、英文放括号，例如 线程（thread）；没有就用英文原词"`},`+
+        `"alias":["用户输入的原词","英文全称","常见缩写"],`+
         `"brief":"一句话定义，80 字内，不用比喻",`+
         `"points":["关键点，每条一句话，讲清机制或边界，3到5条"],`+
-        `"keywords":["5到8个延伸概念，用中文名，英文原名用括号附在后面，例如 线程（thread）"],`+
-        `"related":["最相关的3到5个概念，同样用 中文（english） 的写法"]}`}
+        `"keywords":["5到8个延伸概念；缩写直接写缩写（IP、TCP、DNS），有通行中文词的写成 中文（english）"],`+
+        `"related":["最相关的3到5个概念，写法同上：缩写就用缩写，普通词用 中文（english）"]}`}
     ]
   });
   const txt = j?.choices?.[0]?.message?.content || "";
   const d = parseLooseJSON(txt);
   if(!d) throw new Error("返回不是 JSON");
+  if(abbr) d.__abbr = name;   // 交给 enrich 做最后一道兜底
   return d;
 }
 
@@ -2490,10 +2565,13 @@ async function enrich(N, name, opts){
     const d = await aiExplain(name);
     if(!d) return false;
 
-    // 名字：中文优先；用户输入的原词、模型给的原词、英文原名全部进 alias，
+    // 名字：按工程师口头习惯取主名；用户输入的原词、模型给的原词、英文原名全部进 alias，
     // 这样「current」和「当前」以后指向同一个点，不会各建一个。
+    // 缩写特例：IP / TCP / HTTP 这类，缩写本身就是正式叫法，模型就算翻成中文也压回去。
     const np = splitBilingual(d.name || name);
-    const display = String(np.zh || name).trim().slice(0, 24);
+    const display = String(
+      (d.__abbr || looksAbbrev(name)) ? (d.__abbr || name) : (np.zh || name)
+    ).trim().slice(0, 24);
     const alias = new Set();
     [name, d.name, np.en].forEach(x=>{ if(x && String(x).trim()) alias.add(String(x).trim()); });
     (Array.isArray(d.alias) ? d.alias : []).forEach(x=>{ if(x && String(x).trim()) alias.add(String(x).trim()); });
