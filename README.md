@@ -1,6 +1,7 @@
 # 知识拓扑 · Knowledge Map
 
-> 问一个概念，它长出一片。一个单文件的知识图谱工具：讲解、追问、把没想通的词挂上去，图自己长。
+> 读东西时冒出来的专有名词，先收进来，别打断。
+> 一个本地单文件的知识图谱：边读边收词，回头逐个弄懂，词与词之间自己连起来。
 
 ![预览](docs/preview.png)
 
@@ -8,15 +9,36 @@
 
 ## 它解决什么问题
 
-看文档时经常卡在一个词上：一句话的解释读完了，还是不懂。这时候需要的不是更长的定义，而是**换一种讲法**、**看它在机器里怎么跑一遍**、或者**把上面冒出来的新词也弄明白**。
+**不是记不住，是被打断。**
 
-这个工具就干这件事：
+用 AI 或者读一份材料的时候，专有名词是一层层冒出来的：想弄懂 A，解释里出现了 B；去查 B，B 的解释里又套着 C。
+
+这时候只有两条路：
+
+1. 忍着往下读 —— 回头就忘了自己刚才卡在哪；
+2. 开个新窗口去查 —— 查完切回来，刚才读到哪一段已经找不到了。
+
+查得越深，窗口开得越多；窗口越多，越回不到正文。**阅读的上下文就是这么断掉的，而且往往再也接不回去。**
+
+这个工具只做一件事：**让你不离开正在读的东西，也能把词收下来。**
+
+- 冒出来的词，先随手扔进这个本地页面占个位。它是**名词收件箱**，不是又一个搜索框
+- 有空的时候再逐个补：一句话定义、关键点、换 5 种讲法重讲一遍
+- 补过的词在图上自己连起来；下次再遇到同一片区的词，它已经在那儿了
+- 单文件、零依赖、纯本地跑。不接模型也能用，那就是一本能长出来的手记
+
+**它追求的不是「查得快」，是「不打断」。** 一个词值得停下来查的时候，你在这一页里就能查完；不值得的时候，扔进去以后再说，正文照读。
+
+---
+
+## 你能做什么
 
 - 输入 `TCP 端口`，给你一张卡（定义 + 关键点 + 关联 + 延伸词）
 - 卡上有 **5 个角度**可以再讲一遍：大白话 / 为什么非要有它 / 在机器里怎么跑 / 给个具体例子 / 和易混的比
 - 每次讲解都会带出**新的专有名词**，图上还没有的点一下 `+` 就挂进拓扑，并连一条关系
 - 挂进来的词如果是空的，**一键补全**会排队把它们全填上
 - 认知状态自己标：已掌握 / 待理清；重名的节点会提示**合并成一个**
+- 名字起错了可以直接改（改名时老名字自动变成别名，照样搜得到）
 
 单文件、零依赖、零构建。打开就是一个能用的工具，不是一个设计稿。
 
@@ -175,6 +197,27 @@ node gateway.js revoke 468efa
 
 ---
 
+## 多画布（已设计，待实现）
+
+一个学科一张图，而不是所有东西挤在同一张图上。
+
+理由很实际：把「计算机网络」和「商业地产」塞进同一个拓扑，力导向会硬把它们拉成一团；而且你搜「端口」的时候，永远先想到网络那个，另一个就被永久埋掉了。**混在一起，两边都变模糊。**
+
+所以规划是：
+
+- **每个画布完全独立** —— 自己的节点、连线、笔记，以及自己的视图位置。切换是整份状态换掉，不是在同一份数据上做过滤
+- **名字常驻在顶栏** —— 一个「画布身份控件」一直显示你在哪个学科，点开才展开全部。不做标签页：学科一多就挤成一条细线，还放不下概念数、也没法就地改名
+- **切回来要一模一样** —— 视图平移缩放、选中的节点、面板滚动位置，都要和离开时完全一致。差一点，人就会怀疑自己记错了
+- **删之前问一句，删之后能撤回** —— 二次确认 + 5 秒撤销
+- **键盘优先** —— `⌘K` 切换、`⌘N` 新建、`⌘1–9` 直跳，输入框里打字时这些键自动让路
+- **老数据自动升级** —— 现有拓扑会变成第一个画布「我的拓扑」，一个点都不丢
+
+边界也说清楚：**不做跨画布引用**。一个概念只属于一个学科；要串就在两边各建一个，用备注写「另见 数据库系统 · 索引」。一旦允许共享节点，改 A 会动到 B，最后谁也说不清这个概念是谁的。
+
+> 设计稿与实现清单已单独产出（四个场景：主界面 / 切换器 / 新建改名删除 / 规格），代码尚未落地。当前版本仍是单画布。
+
+---
+
 ## 数据与隐私
 
 - 所有数据存在**你自己浏览器的 localStorage**，没有账号、没有服务端、没有遥测。
@@ -220,9 +263,15 @@ docs/preview.png       截图
 
 ## English
 
-A single-file, zero-dependency knowledge-graph learning tool. Ask about a concept; it answers, links related ideas, and lets you pull unfamiliar terms into the graph. Five "explain it another way" angles, batch fill-in, and node merge/delete.
+**The problem isn't forgetting — it's being interrupted.**
 
-To use the model features, run the tiny local gateway (`node gateway.js --open`) — your real API key never leaves the process, and the HTML file itself contains no secrets, so sharing the file is safe. Works with any OpenAI-compatible `/chat/completions` endpoint.
+Reading docs or working with an AI, every answer spawns new jargon. Explaining A introduces B; explaining B introduces C. You either keep reading and lose your place, or open another tab and lose it anyway. The deeper you dig, the more windows you have, and the further you are from the text you started with.
+
+This is a local, single-file page that catches those terms so you never have to leave what you're reading. Jot a term down and keep going; come back later to explain it properly. Five "explain it another way" angles, batch fill-in, node merge/rename/delete, and a graph that grows itself.
+
+It optimises for *not interrupting you* rather than for answering fast.
+
+To use the model features, run the tiny local gateway (`node gateway.js --open`) — your real API key never leaves the process, and the HTML file itself contains no secrets, so sharing the file is safe. Works with any OpenAI-compatible `/chat/completions` endpoint. A multi-canvas design (one graph per subject, switchable and named) is specified but not yet implemented.
 
 ---
 
