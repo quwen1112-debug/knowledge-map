@@ -30,3 +30,7 @@ build/
 Thumbs.db
 desktop.ini
 growth/
+
+# ---- 本地改动前的临时备份（只在机器上留档，不进仓库）----
+*.bak-*
+知识拓扑_修复版_*.html
